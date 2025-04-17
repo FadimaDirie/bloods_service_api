@@ -4,9 +4,9 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 // Register
-const upload = require('../middleware/upload');
+// const upload = require('../middleware/upload');
 
-UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
+UserRouter.post('/register', async (req, res) => {
   const {
     firstName, middleName, lastName, age,
     phone, location, bloodType, username, password
@@ -18,13 +18,17 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const profilePic = req.file ? req.file.filename : null;
-
     user = new User({
-      firstName, middleName, lastName, age, phone,
-      location, bloodType, username,
+      firstName,
+      middleName,
+      lastName,
+      age,
+      phone,
+      location,
+      bloodType,
+      username,
       password: hashedPassword,
-      profilePic
+      // No profilePic field anymore
     });
 
     await user.save();

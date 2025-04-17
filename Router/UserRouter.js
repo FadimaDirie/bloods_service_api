@@ -48,10 +48,10 @@ UserRouter.post('/login', async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = user.toObject();
 
-    // Add full URL for profilePic
-    if (userWithoutPassword.profilePic) {
-      userWithoutPassword.profilePic = `https://bloods-service-api.onrender.com/uploads/${userWithoutPassword.profilePic}`;
-    }
+    // // Add full URL for profilePic
+    // if (userWithoutPassword.profilePic) {
+    //   userWithoutPassword.profilePic = `https://bloods-service-api.onrender.com/uploads/${userWithoutPassword.profilePic}`;
+    // }
 
     res.json({ msg: 'Login successful', user: userWithoutPassword });
   } catch (err) {

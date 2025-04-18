@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
     bloodType: String,
     username: { type: String, unique: true },
     password: String,
-    profilePic: { type: String }
+
   
 });
 

@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 // Register
 // const upload = require('../middleware/upload');
 
-UserRouter.post('/register', async (req, res) => {
+UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     firstName, middleName, lastName, age,
     phone, location, bloodType, username, password
@@ -18,17 +18,13 @@ UserRouter.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const profilePic = req.file ? req.file.filename : null;
+
     user = new User({
-      firstName,
-      middleName,
-      lastName,
-      age,
-      phone,
-      location,
-      bloodType,
-      username,
+      firstName, middleName, lastName, age, phone,
+      location, bloodType, username,
       password: hashedPassword,
-      // No profilePic field anymore
+      profilePic
     });
 
     await user.save();
@@ -38,7 +34,6 @@ UserRouter.post('/register', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
-
 // Login
 UserRouter.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -52,10 +47,10 @@ UserRouter.post('/login', async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = user.toObject();
 
-    // // Add full URL for profilePic
-    // if (userWithoutPassword.profilePic) {
-    //   userWithoutPassword.profilePic = `https://bloods-service-api.onrender.com/uploads/${userWithoutPassword.profilePic}`;
-    // }
+    // Add full URL for profilePic
+    if (userWithoutPassword.profilePic) {
+      userWithoutPassword.profilePic = `http://localhost:4000/uploads/${userWithoutPassword.profilePic}`;
+    }
 
     res.json({ msg: 'Login successful', user: userWithoutPassword });
   } catch (err) {

@@ -49,7 +49,7 @@ UserRouter.post('/login', async (req, res) => {
 
     // Add full URL for profilePic
     if (userWithoutPassword.profilePic) {
-      userWithoutPassword.profilePic = `http://localhost:4000/uploads/${userWithoutPassword.profilePic}`;
+      userWithoutPassword.profilePic = `https://bloods-service-api.onrender.com/uploads/${userWithoutPassword.profilePic}`;
     }
 
     res.json({ msg: 'Login successful', user: userWithoutPassword });

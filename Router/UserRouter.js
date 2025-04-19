@@ -4,7 +4,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 // Register
-// const upload = require('../middleware/upload');
+const upload = require('../middleware/upload');
 
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {

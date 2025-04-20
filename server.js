@@ -11,7 +11,16 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ✅ Check and create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+// ✅ Now serve the uploads folder
+app.use('/uploads', express.static(uploadsDir));
+
+
 
 
 app.use('/api/user', UserRouter);

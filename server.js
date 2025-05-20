@@ -5,6 +5,7 @@ const DonorRouter = require('./Router/DonorRouter.js')
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
+const RequestBloodRouter = require('./Router/RequestBloodRouter.js');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api/user', UserRouter);
 app.use('/api/donor', DonorRouter);
+app.use('/api/requestblood', RequestBloodRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

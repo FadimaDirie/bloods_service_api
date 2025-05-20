@@ -24,7 +24,7 @@ DonorRouter.get('/donors', async (req, res) => {
 });
 
 // GET donors by blood group
-DonorRouter.get('/api/donor/group/:bloodGroup', async (req, res) => {
+DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
     const bloodGroup = req.params.bloodGroup;
     const donors = await Donor.find({ bloodGroup: bloodGroup });

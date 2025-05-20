@@ -23,4 +23,4 @@ DonorRouter.get('/donors', async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = DonorRouter;

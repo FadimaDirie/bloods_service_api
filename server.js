@@ -1,6 +1,7 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const UserRouter = require('./Router/UserRouter');
+const DonorRouter = require('./Router/DonorRouter')
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
@@ -25,6 +26,7 @@ app.use('/uploads', express.static(uploadsDir));
 
 
 app.use('/api/user', UserRouter);
+app.use('/api/donors', DonorRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

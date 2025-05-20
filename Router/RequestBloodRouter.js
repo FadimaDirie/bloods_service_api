@@ -1,6 +1,6 @@
 const express = require('express');
 const RequestBloodRouter = express.Router();
-const BloodRequest = require('../models/BloodRequest');
+const BloodRequest = require('../models/request');
 
 // POST create new blood request
 RequestBloodRouter.post('/request', async (req, res) => {

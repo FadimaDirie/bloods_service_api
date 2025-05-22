@@ -23,9 +23,9 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     const existingEmail = await User.findOne({ email });
     if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
     // VALIDATION
-    if (!password || typeof password !== 'string') {
-      return res.status(400).json({ msg: 'Valid password is required' });
-    }
+    // if (!password || typeof password !== 'string') {
+    //   return res.status(400).json({ msg: 'Valid password is required' });
+    // }
 
     if (!phone || typeof phone !== 'string') {
       return res.status(400).json({ msg: 'Phone number is required' });

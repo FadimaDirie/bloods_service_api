@@ -1,63 +1,80 @@
 const express = require('express');
-const UserRouter = express.Router();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const upload = require('../middleware/upload'); // multer config
+const UserRouter = express.Router();
 
-// Register
-const upload = require('../middleware/upload');
+// JWT secret key
+const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
+// SIGNUP
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
-    firstName, middleName, lastName, age,
-    phone, location, bloodType, username, password
+    fullName,email,age, phone, location,
+    bloodType, username, password, isDonor, isRequester
   } = req.body;
 
   try {
-    let user = await User.findOne({ username });
-    if (user) return res.status(400).json({ msg: 'User already exists' });
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const profilePic = req.file ? req.file.filename : null;
 
-    user = new User({
-      firstName, middleName, lastName, age, phone,
+    const newUser = new User({
+      fullName,email, age, phone,
       location, bloodType, username,
       password: hashedPassword,
-      profilePic
+      profilePic,
+      roles: {
+        isDonor: isDonor === 'true',
+        isRequester: isRequester === 'true'
+      }
     });
 
-    await user.save();
+    await newUser.save();
     res.status(201).json({ msg: 'User registered successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
-// Login
+
+// LOGIN
 UserRouter.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    let user = await User.findOne({ username });
+    const user = await User.findOne({ username });
     if (!user) return res.status(400).json({ msg: 'Invalid username' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    // Create JWT
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Add full URL for profilePic
-    if (userWithoutPassword.profilePic) {
-      userWithoutPassword.profilePic = `https://bloods-service-api.onrender.com/uploads/${userWithoutPassword.profilePic}`;
-    }
+    const { password: _, ...userData } = user.toObject();
+    userData.profilePic = userData.profilePic
+      ? `https://bloods-service-api.onrender.com/uploads/${userData.profilePic}`
+      : null;
 
-    res.json({ msg: 'Login successful', user: userWithoutPassword });
+    res.json({
+      msg: 'Login successful',
+      token,
+      user: userData
+    });
+
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
-
 
 module.exports = UserRouter;

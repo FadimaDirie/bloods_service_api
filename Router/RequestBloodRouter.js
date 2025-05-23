@@ -14,7 +14,7 @@ RequestBloodRouter.post('/request', async (req, res) => {
   }
 });
 
-// GET all blood requests (optional)
+// GET all blood requests
 RequestBloodRouter.get('/request', async (req, res) => {
   try {
     const requests = await BloodRequest.find().sort({ createdAt: -1 });

@@ -1,6 +1,5 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const upload = require('../middleware/upload'); // multer config
@@ -12,8 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 // SIGNUP
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
-    fullName,email,age, phone, location,
-    bloodType, username, password, isDonor, isRequester
+    fullName, email, age, phone, location,
+    bloodType, username, password, isDonor, isRequester, fcmToken
   } = req.body;
 
   try {
@@ -22,7 +21,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     const existingEmail = await User.findOne({ email });
     if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
-    // VALIDATION
+
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -35,10 +34,11 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     const profilePic = req.file ? req.file.filename : null;
 
     const newUser = new User({
-      fullName,email, age, phone,
+      fullName, email, age, phone,
       location, bloodType, username,
       password: hashedPassword,
       profilePic,
+      fcmToken,
       roles: {
         isDonor: isDonor === 'true',
         isRequester: isRequester === 'true'
@@ -56,7 +56,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
 // LOGIN
 UserRouter.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, fcmToken } = req.body;
 
   try {
     const user = await User.findOne({ username });
@@ -65,7 +65,11 @@ UserRouter.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
-    // Create JWT
+    if (fcmToken) {
+      user.fcmToken = fcmToken;
+      await user.save();
+    }
+
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const { password: _, ...userData } = user.toObject();
@@ -78,7 +82,6 @@ UserRouter.post('/login', async (req, res) => {
       token,
       user: userData
     });
-
 
   } catch (err) {
     console.error(err);

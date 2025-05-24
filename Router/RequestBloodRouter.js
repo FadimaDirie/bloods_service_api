@@ -1,6 +1,9 @@
 const express = require('express');
 const RequestBloodRouter = express.Router();
 const BloodRequest = require('../models/request');
+const User = require('../models/User');
+const admin = require('../firebase');
+
 
 // POST create new blood request
 

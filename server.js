@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
 const RequestBloodRouter = require('./Router/RequestBloodRouter.js');
+
 require('dotenv').config();
 
 const app = express();
@@ -22,6 +23,10 @@ if (!fs.existsSync(uploadsDir)) {
 
 // ✅ Now serve the uploads folder
 app.use('/uploads', express.static(uploadsDir));
+
+const notifyRoute = require('./routes/notification');
+app.use('/api/notify', notifyRoute);
+
 
 
 

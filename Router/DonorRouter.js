@@ -26,13 +26,36 @@ DonorRouter.get('/donors', async (req, res) => {
 // GET donors by blood group
 DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
-    const bloodGroup = req.params.bloodGroup;
-    const donors = await Donor.find({ bloodGroup: bloodGroup });
+    const donors = await Donor.aggregate([
+      { $match: { bloodGroup: req.params.bloodGroup } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'phone',
+          foreignField: 'phone',
+          as: 'userInfo'
+        }
+      },
+      {
+        $unwind: '$userInfo'
+      },
+      {
+        $project: {
+          fullName: 1,
+          location: 1,
+          bloodGroup: 1,
+          fcmToken: '$userInfo.fcmToken'
+        }
+      }
+    ]);
+
     res.status(200).json(donors);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
+
 
 
 module.exports = DonorRouter;

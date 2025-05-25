@@ -1,5 +1,8 @@
+// firebase.js
 const admin = require('firebase-admin');
-const serviceAccount = require('./uploads/bloodlife-bc66b-firebase-adminsdk-fbsvc-<...>.json'); // write full name
+
+// Environment variable JSON string
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

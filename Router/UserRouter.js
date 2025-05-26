@@ -76,26 +76,35 @@ UserRouter.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
+    // ✅ Save FCM token if provided
     if (fcmToken) {
       user.fcmToken = fcmToken;
       await user.save();
     }
 
+    // ✅ Create JWT token
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    const { password: _, ...userData } = user.toObject();
-    userData.profilePic = userData.profilePic
-      ? `https://bloods-service-api.onrender.com/uploads/${userData.profilePic}`
+    // ✅ Get full user object (including password)
+    const userObj = user.toObject();
+
+    // ✅ Update profilePic to full URL if it exists
+    userObj.profilePic = userObj.profilePic
+      ? `https://bloods-service-api.onrender.com/uploads/${userObj.profilePic}`
       : null;
 
+    // ✅ Make sure fcmToken is included in the response
+    userObj.fcmToken = user.fcmToken || null;
+
+    // ✅ Send response
     res.json({
       msg: 'Login successful',
       token,
-      user: userData
+      user: userObj
     });
 
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ msg: 'Server error' });
   }
 });

@@ -12,7 +12,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone, location,
-    bloodType, username, password, isDonor, isRequester, fcmToken
+    bloodType, username, password,
+    isDonor, isRequester, fcmToken,
+    city, latitude, longitude // ✅ added here
   } = req.body;
 
   try {
@@ -34,11 +36,19 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     const profilePic = req.file ? req.file.filename : null;
 
     const newUser = new User({
-      fullName, email, age, phone,
-      location, bloodType, username,
+      fullName,
+      email,
+      age,
+      phone,
+      location,
+      bloodType,
+      username,
       password: hashedPassword,
       profilePic,
       fcmToken,
+      city,
+      latitude: parseFloat(latitude),   // ✅ convert from string to number
+      longitude: parseFloat(longitude), // ✅ convert from string to number
       roles: {
         isDonor: isDonor === 'true',
         isRequester: isRequester === 'true'
@@ -53,6 +63,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
+
 
 // LOGIN
 UserRouter.post('/login', async (req, res) => {

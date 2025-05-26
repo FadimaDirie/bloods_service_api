@@ -5,7 +5,7 @@ const bloodRequestSchema = new mongoose.Schema({
   unit: { type: String, required: true },
   urgency: { type: String, required: true }, // ✅ Added urgency
   status: { type: String, required: true }, // ✅ Added status
-  name: { type: String, required: true },
+  patientName: { type: String, required: true },
   age: { type: Number, required: true },
   phone: { type: String, required: true },
   hospital: { type: String, required: true },

@@ -5,16 +5,20 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   age: { type: Number },
   phone: { type: String, required: true, unique: true },
-  location: { type: String },
+  city: { type: String },                    // ✅ city name
+  latitude: { type: Number },                // ✅ latitude for maps
+  longitude: { type: Number },               // ✅ longitude for maps
   bloodType: { type: String },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  profilePic: { type: String }, // no unique, no required
-  fcmToken: { type: String },   // ✅ added this field
+  profilePic: { type: String },
+  fcmToken: { type: String },
   roles: {
     isDonor: { type: Boolean, default: false },
     isRequester: { type: Boolean, default: false }
-  }
+  },
+ 
 }, { timestamps: true });
+
 
 module.exports = mongoose.model('User', UserSchema);

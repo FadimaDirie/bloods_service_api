@@ -18,39 +18,28 @@ RequestBloodRouter.get('/all', async (req, res) => {
   }
 });
 
+// POST: Create a blood request
 RequestBloodRouter.post('/request', async (req, res) => {
-  try {
-    const newRequest = new BloodRequest(req.body);
-    await newRequest.save();
+  const {
+    bloodGroup, unit, urgency, status,
+    name, age, phone, hospital, location
+  } = req.body;
 
-    const donors = await User.find({
-      'roles.isDonor': true,
-      fcmToken: { $ne: null },
-      bloodType: req.body.bloodType,
+  // ❗ Server-side validation
+  if (!bloodGroup || !unit || !urgency || !status || !name || !age || !phone || !hospital || !location) {
+    return res.status(400).json({ message: "All fields are required!" });
+  }
+
+  try {
+    const request = new BloodRequest({
+      bloodGroup, unit, urgency, status,
+      name, age, phone, hospital, location
     });
 
-    for (const donor of donors) {
-      if (!donor.fcmToken) continue;
-
-      const message = {
-        token: donor.fcmToken,
-        notification: {
-          title: `🩸 ${req.body.bloodType} - Emergency Blood Needed!`,
-          body: `👤 ${req.body.patientName} at ${req.body.hospitalName}, ${req.body.location}, needs ${req.body.unit} unit(s)`,
-        },
-        data: {
-          requestId: newRequest._id.toString(),
-        },
-      };
-
-      await admin.messaging().send(message);
-      console.log(`✅ Notification sent to ${donor.fullName}`);
-    }
-
-    res.status(201).json({ message: 'Blood request created and notifications sent!' });
+    await request.save();
+    res.status(201).json({ message: "Request saved successfully." });
   } catch (error) {
-    console.error('❌ Blood request error:', error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 

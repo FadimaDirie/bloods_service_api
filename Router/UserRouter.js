@@ -2,19 +2,19 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const upload = require('../middleware/upload'); // multer config
+const Donor = require('../models/donor'); // ✅ Import donor model
+const upload = require('../middleware/upload');
 const UserRouter = express.Router();
 
-// JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// SIGNUP
+// ✅ SIGNUP
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
-    fullName, email, age, phone, location,
+    fullName, email, age, phone,
     bloodType, username, password,
-    isDonor, isRequester, fcmToken,
-    city, latitude, longitude // ✅ added here
+    fcmToken, city, latitude, longitude,
+    gender // ✅ gender added
   } = req.body;
 
   try {
@@ -40,22 +40,19 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       email,
       age,
       phone,
-      location,
       bloodType,
       username,
       password: hashedPassword,
       profilePic,
       fcmToken,
+      gender,
       city,
-      latitude: parseFloat(latitude),   // ✅ convert from string to number
-      longitude: parseFloat(longitude), // ✅ convert from string to number
-      roles: {
-        isDonor: isDonor === 'true',
-        isRequester: isRequester === 'true'
-      }
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude)
     });
 
     await newUser.save();
+
     res.status(201).json({ msg: 'User registered successfully' });
 
   } catch (err) {
@@ -64,14 +61,18 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   }
 });
 
-// ✅ Update isDonor role only
+// ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {
-  const { isDonor } = req.body;
+  const { isDonor, isRequester } = req.body;
 
   try {
+    const updateData = {};
+    if (typeof isDonor === 'boolean') updateData['roles.isDonor'] = isDonor;
+    if (typeof isRequester === 'boolean') updateData['roles.isRequester'] = isRequester;
+
     const updated = await User.findByIdAndUpdate(
       req.params.id,
-      { 'roles.isDonor': isDonor },
+      updateData,
       { new: true }
     );
 
@@ -79,16 +80,34 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    res.json({ msg: 'Role updated successfully', user: updated });
+    // ✅ If the user just became a donor, add to donor list based on user model
+    if (isDonor === true) {
+      const existingDonor = await Donor.findOne({ phone: updated.phone });
+      if (!existingDonor) {
+        const newDonor = new Donor({
+          fullName: updated.fullName,
+          phone: updated.phone,
+          location: updated.city,
+          bloodGroup: updated.bloodType,
+          age: updated.age,
+          healthStatus: 'Healthy',
+          availability: 'Available',
+          lastDonationDate: '',
+          weight: 0,
+          type: updated.bloodType // ✅ assign to correct blood group type
+        });
+        await newDonor.save();
+      }
+    }
+
+    res.json({ msg: 'Roles updated successfully', user: updated });
   } catch (err) {
     console.error('Update role error:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
-
-
-// LOGIN
+// ✅ LOGIN
 UserRouter.post('/login', async (req, res) => {
   const { username, password, fcmToken } = req.body;
 
@@ -99,27 +118,20 @@ UserRouter.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
-    // ✅ Save FCM token if provided
     if (fcmToken) {
       user.fcmToken = fcmToken;
       await user.save();
     }
 
-    // ✅ Create JWT token
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
-    // ✅ Get full user object (including password)
     const userObj = user.toObject();
-
-    // ✅ Update profilePic to full URL if it exists
     userObj.profilePic = userObj.profilePic
       ? `https://bloods-service-api.onrender.com/uploads/${userObj.profilePic}`
       : null;
 
-    // ✅ Make sure fcmToken is included in the response
     userObj.fcmToken = user.fcmToken || null;
 
-    // ✅ Send response
     res.json({
       msg: 'Login successful',
       token,
@@ -132,6 +144,7 @@ UserRouter.post('/login', async (req, res) => {
   }
 });
 
+// ✅ Save FCM Token
 UserRouter.post('/save-token', async (req, res) => {
   const { userId, fcmToken } = req.body;
 
@@ -146,5 +159,25 @@ UserRouter.post('/save-token', async (req, res) => {
   }
 });
 
+// ✅ GET donors by blood group using user model only
+UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {
+  try {
+    const donors = await User.find({
+      'roles.isDonor': true,
+      bloodType: req.params.bloodGroup
+    }, {
+      fullName: 1,
+      city: 1,
+      bloodType: 1,
+      fcmToken: 1,
+      age: 1,
+      phone: 1
+    });
+
+    res.status(200).json(donors);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
 
 module.exports = UserRouter;

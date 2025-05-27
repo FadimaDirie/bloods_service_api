@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const Donor = require('../models/donor'); // ✅ Import donor model
+const Donor = require('../models/donor');
 const upload = require('../middleware/upload');
 const UserRouter = express.Router();
 
@@ -14,7 +14,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     fullName, email, age, phone,
     bloodType, username, password,
     fcmToken, city, latitude, longitude,
-    gender // ✅ gender added
+    gender
   } = req.body;
 
   try {
@@ -80,7 +80,6 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    // ✅ If the user just became a donor, add to donor list based on user model
     if (isDonor === true) {
       const existingDonor = await Donor.findOne({ phone: updated.phone });
       if (!existingDonor) {
@@ -92,9 +91,9 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
           age: updated.age,
           healthStatus: 'Healthy',
           availability: 'Available',
-          lastDonationDate: '',
+          // lastDonationDate: new Date().toISOString(),
           weight: 0,
-          type: updated.bloodType // ✅ assign to correct blood group type
+          type: updated.bloodType
         });
         await newDonor.save();
       }

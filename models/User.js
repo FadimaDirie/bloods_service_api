@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
   fcmToken: { type: String },
   roles: {
     isDonor: { type: Boolean, default: false },
-    isRequester: { type: Boolean, default: false }
+    isRequester: { type: Boolean, default: true}
   },
  
 }, { timestamps: true });

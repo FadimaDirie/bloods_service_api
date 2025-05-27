@@ -64,6 +64,29 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   }
 });
 
+// ✅ Update isDonor role only
+UserRouter.put('/:id/updateRole', async (req, res) => {
+  const { isDonor } = req.body;
+
+  try {
+    const updated = await User.findByIdAndUpdate(
+      req.params.id,
+      { 'roles.isDonor': isDonor },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json({ msg: 'Role updated successfully', user: updated });
+  } catch (err) {
+    console.error('Update role error:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+
 
 // LOGIN
 UserRouter.post('/login', async (req, res) => {

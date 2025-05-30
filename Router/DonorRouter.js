@@ -46,13 +46,19 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
           location: 1,
           bloodGroup: 1,
           fcmToken: '$userInfo.fcmToken',
-           email: '$userInfo.email',
+          email: '$userInfo.email',
           age: '$userInfo.age',
           username: '$userInfo.username',
           profilePic: '$userInfo.profilePic',
           roles: '$userInfo.roles',
           createdAt: '$userInfo.createdAt',
-          updatedAt: '$userInfo.updatedAt'
+          updatedAt: '$userInfo.updatedAt',
+          gender: '$userInfo.gender',
+          city: '$userInfo.city',
+          latitude: '$userInfo.latitude',
+          longitude: '$userInfo.longitude'
+          
+
         }
       }
     ]);

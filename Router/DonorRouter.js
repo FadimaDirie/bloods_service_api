@@ -23,6 +23,7 @@ DonorRouter.get('/donors', async (req, res) => {
   }
 });
 
+
 // GET donors by blood group
 DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
@@ -44,9 +45,8 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
           fullName: 1,
           location: 1,
           bloodGroup: 1,
-          phone: 1,
           fcmToken: '$userInfo.fcmToken',
-          email: '$userInfo.email',
+           email: '$userInfo.email',
           age: '$userInfo.age',
           username: '$userInfo.username',
           profilePic: '$userInfo.profilePic',
@@ -63,6 +63,7 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
+
 
 
 

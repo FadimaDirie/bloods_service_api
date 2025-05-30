@@ -49,6 +49,7 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
           email: '$userInfo.email',
           age: '$userInfo.age',
           username: '$userInfo.username',
+          phone: '$userInfo.phone',
           profilePic: '$userInfo.profilePic',
           roles: '$userInfo.roles',
           createdAt: '$userInfo.createdAt',

@@ -8,7 +8,6 @@ const UserRouter = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// ✅ SIGNUP
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -18,7 +17,6 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   } = req.body;
 
   try {
-   
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -33,7 +31,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     const newUser = new User({
       fullName,
       email: email || undefined,             // ✅ Optional
-      age: age || undefined,       // ✅ Optional
+      age: age ? parseInt(age) : undefined,  // ✅ Optional
       phone,
       bloodType,
       username: username || undefined,       // ✅ Optional
@@ -42,8 +40,8 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       fcmToken,
       gender,
       city,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude)
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined
     });
 
     await newUser.save();

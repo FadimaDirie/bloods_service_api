@@ -50,7 +50,10 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server error' });
+      res.status(500).json({
+      msg: 'Server error',
+      error: err.message  // 👈 return readable error in Postman
+  });
   }
 });
 

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: false },
   age: { type: Number },
   phone: { type: String, required: true, unique: true },
   gender: { type: String }, // ✅ gender field added
@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
   latitude: { type: Number },
   longitude: { type: Number },
   bloodType: { type: String },
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: flase, },
   password: { type: String, required: true },
   profilePic: { type: String },
   fcmToken: { type: String },

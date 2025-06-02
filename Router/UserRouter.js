@@ -9,88 +9,59 @@ const UserRouter = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// ✅ Register with image upload (inline multer)
-UserRouter.post('/register', async (req, res) => {
-  upload.single('profilePic')(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ msg: 'Image upload error', error: err.message });
+// ✅ SIGNUP
+UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
+  const {
+    fullName, email, age, phone,
+    bloodType, username, password,
+    fcmToken, city, latitude, longitude,
+    gender
+  } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
+
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ msg: 'Valid password is required' });
     }
 
-    const {
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ msg: 'Phone number is required' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const profilePic = req.file ? req.file.filename : null;
+
+    const newUser = new User({
       fullName,
       email,
       age,
       phone,
       bloodType,
       username,
-      password,
+      password: hashedPassword,
+      profilePic,
       fcmToken,
+      gender,
       city,
-      latitude,
-      longitude,
-      gender
-    } = req.body;
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude)
+    });
 
-    try {
-      const existingUser = await User.findOne({ username });
-      if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
+    await newUser.save();
 
-      
-      if (!password || typeof password !== 'string') {
-        return res.status(400).json({ msg: 'Password is required' });
-      }
+    res.status(201).json({ msg: 'User registered successfully' });
 
-      if (!phone || typeof phone !== 'string') {
-        return res.status(400).json({ msg: 'Phone number is required' });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const profilePic = req.file ? `uploads/${req.file.filename}` : null;
-
-      const newUser = new User({
-        fullName,
-        email,
-        age,
-        phone,
-        bloodType,
-        username,
-        password: hashedPassword,
-        profilePic,
-        fcmToken,
-        gender,
-        city,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
-      });
-
-      await newUser.save();
-
-      const imageUrl = profilePic
-        ? `${req.protocol}://${req.get('host')}/${profilePic}`
-        : null;
-
-      res.status(201).json({
-        msg: 'User registered successfully',
-        user: {
-          username: newUser.username,
-          fullName: newUser.fullName,
-          email: newUser.email,
-          profilePic: imageUrl,
-          bloodType: newUser.bloodType,
-          phone: newUser.phone,
-          city: newUser.city,
-          latitude: newUser.latitude,
-          longitude: newUser.longitude,
-          gender: newUser.gender
-        }
-      });
-
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ msg: 'Server error' });
-    }
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server error' });
+  }
 });
+
 
 // ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {

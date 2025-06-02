@@ -32,11 +32,11 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     const newUser = new User({
       fullName,
-      email,
-      age,
+      email: email || undefined,             // ✅ Optional
+      age: age || undefined,       // ✅ Optional
       phone,
       bloodType,
-      username,
+      username: username || undefined,       // ✅ Optional
       password: hashedPassword,
       profilePic,
       fcmToken,

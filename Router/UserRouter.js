@@ -18,12 +18,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   } = req.body;
 
   try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
-
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
-
+   
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -106,13 +101,13 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
   }
 });
 
-// ✅ LOGIN
+// ✅ LOGIN// ✅ Login
 UserRouter.post('/login', async (req, res) => {
-  const { username, password, fcmToken } = req.body;
+  const { phone, password, fcmToken } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ msg: 'Invalid username' });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(400).json({ msg: 'Invalid phone number' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
@@ -125,8 +120,8 @@ UserRouter.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const userObj = user.toObject();
-    userObj.profilePic = userObj.profilePic
-      ? `https://bloods-service-api.onrender.com/uploads/${userObj.profilePic}`
+    userObj.profilePic = user.profilePic
+      ? `${req.protocol}://${req.get('host')}/${user.profilePic}`
       : null;
 
     userObj.fcmToken = user.fcmToken || null;
@@ -142,6 +137,7 @@ UserRouter.post('/login', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
+
 
 // ✅ Save FCM Token
 UserRouter.post('/save-token', async (req, res) => {

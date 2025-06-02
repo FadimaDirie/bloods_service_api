@@ -23,7 +23,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // ✅ Now serve the uploads folder
-app.use('/uploads', express.static(uploadsDir));
+//app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static('uploads'));
 
 const notificationRouter = require('./Router/notification');
 app.use('/api/notify', notificationRouter);

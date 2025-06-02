@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
   latitude: { type: Number },
   longitude: { type: Number },
   bloodType: { type: String },
-  username: { type: String, required: flase, },
+  username: { type: String, required: false },
   password: { type: String, required: true },
   profilePic: { type: String },
   fcmToken: { type: String },

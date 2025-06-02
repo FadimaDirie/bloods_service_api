@@ -1,27 +1,16 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 const User = require('../models/User');
 const Donor = require('../models/donor');
-const upload = require('../middleware/upload');
+const upload = require('../middleware/upload'); // ✅ Only this
 const UserRouter = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// ✅ Multer Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // e.g. 1717000000.jpg
-  }
-});
-
-const upload = multer({ storage });
-
-router.post('/register', async (req, res) => {
-  // ✅ Use multer inline
+// ✅ Register with image upload (inline multer)
+UserRouter.post('/register', async (req, res) => {
   upload.single('profilePic')(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ msg: 'Image upload error', error: err.message });
@@ -43,7 +32,6 @@ router.post('/register', async (req, res) => {
     } = req.body;
 
     try {
-      // Validate if user exists
       const existingUser = await User.findOne({ username });
       if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
 
@@ -59,8 +47,6 @@ router.post('/register', async (req, res) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-
-      // ✅ Construct image path
       const profilePic = req.file ? `uploads/${req.file.filename}` : null;
 
       const newUser = new User({
@@ -81,7 +67,6 @@ router.post('/register', async (req, res) => {
 
       await newUser.save();
 
-      // ✅ Return full image URL
       const imageUrl = profilePic
         ? `${req.protocol}://${req.get('host')}/${profilePic}`
         : null;
@@ -108,6 +93,7 @@ router.post('/register', async (req, res) => {
     }
   });
 });
+
 // ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {
   const { isDonor, isRequester } = req.body;
@@ -117,15 +103,9 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
     if (typeof isDonor === 'boolean') updateData['roles.isDonor'] = isDonor;
     if (typeof isRequester === 'boolean') updateData['roles.isRequester'] = isRequester;
 
-    const updated = await User.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
+    const updated = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
-    if (!updated) {
-      return res.status(404).json({ msg: 'User not found' });
-    }
+    if (!updated) return res.status(404).json({ msg: 'User not found' });
 
     if (isDonor === true) {
       const existingDonor = await Donor.findOne({ phone: updated.phone });
@@ -138,7 +118,6 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
           age: updated.age,
           healthStatus: 'Healthy',
           availability: 'Available',
-          // lastDonationDate: new Date().toISOString(),
           weight: 0,
           type: updated.bloodType
         });
@@ -147,12 +126,14 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
     }
 
     res.json({ msg: 'Roles updated successfully', user: updated });
+
   } catch (err) {
     console.error('Update role error:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
+// ✅ Login
 UserRouter.post('/login', async (req, res) => {
   const { phone, password, fcmToken } = req.body;
 
@@ -171,8 +152,8 @@ UserRouter.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const userObj = user.toObject();
-    userObj.profilePic = userObj.profilePic
-      ? `https://bloods-service-api.onrender.com/uploads/${userObj.profilePic}`
+    userObj.profilePic = user.profilePic
+      ? `${req.protocol}://${req.get('host')}/${user.profilePic}`
       : null;
 
     userObj.fcmToken = user.fcmToken || null;
@@ -204,21 +185,13 @@ UserRouter.post('/save-token', async (req, res) => {
   }
 });
 
-// ✅ GET donors by blood group using user model only
+// ✅ Get Donors by Blood Group
 UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
-    const donors = await User.find({
-      'roles.isDonor': true,
-      bloodType: req.params.bloodGroup
-    }, {
-      fullName: 1,
-      city: 1,
-      bloodType: 1,
-      fcmToken: 1,
-      age: 1,
-      phone: 1
-    });
-
+    const donors = await User.find(
+      { 'roles.isDonor': true, bloodType: req.params.bloodGroup },
+      { fullName: 1, city: 1, bloodType: 1, fcmToken: 1, age: 1, phone: 1 }
+    );
     res.status(200).json(donors);
   } catch (err) {
     res.status(500).json({ msg: 'Server error', error: err.message });

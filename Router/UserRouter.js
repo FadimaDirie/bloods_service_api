@@ -32,12 +32,8 @@ UserRouter.post('/register', async (req, res) => {
     } = req.body;
 
     try {
-      const existingUser = await User.findOne({ username });
-      if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
-
-      const existingEmail = await User.findOne({ email });
-      if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
-
+    
+      
       if (!password || typeof password !== 'string') {
         return res.status(400).json({ msg: 'Password is required' });
       }

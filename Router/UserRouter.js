@@ -8,7 +8,6 @@ const UserRouter = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// ✅ SIGNUP
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -18,7 +17,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   } = req.body;
 
   try {
-  
+    // ✅ Validate required fields
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -27,9 +26,21 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       return res.status(400).json({ msg: 'Phone number is required' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const profilePic = req.file ? req.file.filename : null;
+    // ✅ Check if username or email already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ msg: 'Username already exists' });
+    }
 
+   
+
+    // ✅ Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ Save filename or null
+    const profilePic = req.file ? `uploads/${req.file.filename}` : null;
+
+    // ✅ Create and save user
     const newUser = new User({
       fullName,
       email,
@@ -48,10 +59,29 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ msg: 'User registered successfully' });
+    // ✅ Build public URL for image
+    const imageUrl = profilePic
+      ? `${req.protocol}://${req.get('host')}/${profilePic}`
+      : null;
+
+    res.status(201).json({
+      msg: 'User registered successfully',
+      user: {
+        username: newUser.username,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        profilePic: imageUrl,
+        bloodType: newUser.bloodType,
+        phone: newUser.phone,
+        city: newUser.city,
+        latitude: newUser.latitude,
+        longitude: newUser.longitude,
+        gender: newUser.gender
+      }
+    });
 
   } catch (err) {
-    console.error(err);
+    console.error('Register error:', err); // ✅ Log actual error
     res.status(500).json({ msg: 'Server error' });
   }
 });

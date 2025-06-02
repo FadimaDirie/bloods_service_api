@@ -8,59 +8,106 @@ const UserRouter = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
-// ✅ SIGNUP
-UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
-  const {
-    fullName, email, age, phone,
-    bloodType, username, password,
-    fcmToken, city, latitude, longitude,
-    gender
-  } = req.body;
+// ✅ Multer Configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // e.g. 1717000000.jpg
+  }
+});
 
-  try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
+const upload = multer({ storage });
 
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
-
-    if (!password || typeof password !== 'string') {
-      return res.status(400).json({ msg: 'Valid password is required' });
+router.post('/register', async (req, res) => {
+  // ✅ Use multer inline
+  upload.single('profilePic')(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ msg: 'Image upload error', error: err.message });
     }
 
-    if (!phone || typeof phone !== 'string') {
-      return res.status(400).json({ msg: 'Phone number is required' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const profilePic = req.file ? req.file.filename : null;
-
-    const newUser = new User({
+    const {
       fullName,
       email,
       age,
       phone,
       bloodType,
       username,
-      password: hashedPassword,
-      profilePic,
+      password,
       fcmToken,
-      gender,
       city,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude)
-    });
+      latitude,
+      longitude,
+      gender
+    } = req.body;
 
-    await newUser.save();
+    try {
+      // Validate if user exists
+      const existingUser = await User.findOne({ username });
+      if (existingUser) return res.status(400).json({ msg: 'Username already exists' });
 
-    res.status(201).json({ msg: 'User registered successfully' });
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) return res.status(400).json({ msg: 'Email already registered' });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: 'Server error' });
-  }
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ msg: 'Password is required' });
+      }
+
+      if (!phone || typeof phone !== 'string') {
+        return res.status(400).json({ msg: 'Phone number is required' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // ✅ Construct image path
+      const profilePic = req.file ? `uploads/${req.file.filename}` : null;
+
+      const newUser = new User({
+        fullName,
+        email,
+        age,
+        phone,
+        bloodType,
+        username,
+        password: hashedPassword,
+        profilePic,
+        fcmToken,
+        gender,
+        city,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      });
+
+      await newUser.save();
+
+      // ✅ Return full image URL
+      const imageUrl = profilePic
+        ? `${req.protocol}://${req.get('host')}/${profilePic}`
+        : null;
+
+      res.status(201).json({
+        msg: 'User registered successfully',
+        user: {
+          username: newUser.username,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          profilePic: imageUrl,
+          bloodType: newUser.bloodType,
+          phone: newUser.phone,
+          city: newUser.city,
+          latitude: newUser.latitude,
+          longitude: newUser.longitude,
+          gender: newUser.gender
+        }
+      });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ msg: 'Server error' });
+    }
+  });
 });
-
 // ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {
   const { isDonor, isRequester } = req.body;
@@ -106,13 +153,12 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
   }
 });
 
-// ✅ LOGIN
 UserRouter.post('/login', async (req, res) => {
-  const { username, password, fcmToken } = req.body;
+  const { phone, password, fcmToken } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ msg: 'Invalid username' });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(400).json({ msg: 'Invalid phone number' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });

@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
 const RequestBloodRouter = require('./Router/RequestBloodRouter.js');
+const ReportRouter = require('./Router/ReportRouter.js');
 
 
 require('dotenv').config();
@@ -36,6 +37,7 @@ app.use('/api/notify', notificationRouter);
 app.use('/api/user', UserRouter);
 app.use('/api/donor', DonorRouter);
 app.use('/api/requestblood', RequestBloodRouter);
+app.use('/api/reports', ReportRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

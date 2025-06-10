@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Donor = require('../models/donor');
 const upload = require('../middleware/upload');
 const UserRouter = express.Router();
+const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add this at the top
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 
@@ -102,8 +103,47 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
   }
 });
 
-// ✅ LOGIN// ✅ Login
-UserRouter.post('/login', async (req, res) => {
+// // ✅ LOGIN// ✅ Login
+// UserRouter.post('/login', async (req, res) => {
+//   const { phone, password, fcmToken } = req.body;
+
+//   try {
+//     const user = await User.findOne({ phone });
+//     if (!user) return res.status(400).json({ msg: 'Invalid phone number' });
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
+
+//     if (fcmToken) {
+//       user.fcmToken = fcmToken;
+//       await user.save();
+//     }
+
+//     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+//     const userObj = user.toObject();
+//     userObj.profilePic = user.profilePic
+//       ? `${req.protocol}://${req.get('host')}/${user.profilePic}`
+//       : null;
+
+//     userObj.fcmToken = user.fcmToken || null;
+
+//     res.json({
+//       msg: 'Login successful',
+//       token,
+//       user: userObj
+//     });
+
+//   } catch (err) {
+//     console.error('Login error:', err);
+//     res.status(500).json({ msg: 'Server error' });
+//   }
+// });
+
+// login with blockchain simulate 
+// ✅ LOGIN
+// ✅ LOGIN ROUTE
+router.post('/login', async (req, res) => {
   const { phone, password, fcmToken } = req.body;
 
   try {
@@ -118,13 +158,14 @@ UserRouter.post('/login', async (req, res) => {
       await user.save();
     }
 
+    await logToBlockchain(user._id); // ⬅️ Log to simulated blockchain (MongoDB)
+
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     const userObj = user.toObject();
     userObj.profilePic = user.profilePic
       ? `${req.protocol}://${req.get('host')}/${user.profilePic}`
       : null;
-
     userObj.fcmToken = user.fcmToken || null;
 
     res.json({

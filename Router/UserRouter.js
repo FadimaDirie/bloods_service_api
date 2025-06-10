@@ -104,7 +104,7 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
 });
 
 // ✅ LOGIN ROUTE
-router.post('/login', async (req, res) => {
+UserRouter.post('/login', async (req, res) => {
   const { phone, password, fcmToken } = req.body;
 
   try {

@@ -2,6 +2,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const UserRouter = require('./Router/UserRouter');
 const DonorRouter = require('./Router/DonorRouter.js')
+const orderRoutes = require('./routes/orderRoutes');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
@@ -57,6 +58,7 @@ app.use('/api/user', UserRouter);
 app.use('/api/donor', DonorRouter);
 app.use('/api/requestblood', RequestBloodRouter);
 app.use('/api/reports', ReportRouter);
+app.use('/api', orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

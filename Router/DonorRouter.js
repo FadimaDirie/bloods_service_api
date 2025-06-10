@@ -4,7 +4,7 @@ const Donor = require('../models/donor')
 
 // POST /api/donors
 DonorRouter.post('/donors', async (req, res) => {
-  try {
+  try { 
     const newDonor = new Donor(req.body);
     const saved = await newDonor.save();
     res.status(201).json(saved);

@@ -15,6 +15,13 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+<<<<<<< HEAD
+=======
+  status: {
+    type: String,
+    default: 'waiting' // Default value is now 'waiting'
+  },
+>>>>>>> f8878d5 (update)
   createdAt: {
     type: Date,
     default: Date.now

@@ -1,5 +1,4 @@
 const Order = require('../models/Order');
-const User = require('../models/User');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -28,8 +27,8 @@ exports.getMyOrders = async (req, res) => {
         { donorId: userId }
       ]
     })
-    .populate('requesterInfo', 'name email phone bloodType location')
-    .populate('donorInfo', 'name email phone bloodType location')
+    .populate('requesterId', 'name email phone bloodType location')
+    .populate('donorId', 'name email phone bloodType location')
     .sort({ createdAt: -1 });
 
     res.status(200).json({

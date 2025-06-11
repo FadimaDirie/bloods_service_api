@@ -30,7 +30,7 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
     const donors = await Donor.aggregate([
       // Match donors by blood group
-      { $match: { bloodGroup: req.params.bloodGroup } },
+      { $match: { bloodGroup: req.params.bloodType } },
 
       // Join with User model on phone field
       {

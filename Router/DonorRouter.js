@@ -1,6 +1,7 @@
 const express = require('express');
 const DonorRouter = express.Router();
 const Donor = require('../models/donor')
+const User = require('../models/User');   // your User model
 
 // POST /api/donors
 DonorRouter.post('/donors', async (req, res) => {
@@ -24,11 +25,14 @@ DonorRouter.get('/donors', async (req, res) => {
 });
 
 
-// GET donors by blood group
+// GET donors by blood group (with user details where isDonor is true)
 DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   try {
     const donors = await Donor.aggregate([
+      // Match donors by blood group
       { $match: { bloodGroup: req.params.bloodGroup } },
+
+      // Join with User model on phone field
       {
         $lookup: {
           from: 'users',
@@ -37,12 +41,17 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
           as: 'userInfo'
         }
       },
-      {
-        $unwind: '$userInfo'
-      },
+
+      // Flatten the userInfo array
+      { $unwind: '$userInfo' },
+
+      // Filter only users who are donors
+      { $match: { 'userInfo.roles.isDonor': true } },
+
+      // Select required fields
       {
         $project: {
-          fullName: 1,
+          fullName: '$userInfo.fullName',
           location: 1,
           bloodGroup: 1,
           fcmToken: '$userInfo.fcmToken',
@@ -58,15 +67,13 @@ DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
           city: '$userInfo.city',
           latitude: '$userInfo.latitude',
           longitude: '$userInfo.longitude'
-          
-
         }
       }
     ]);
 
     res.status(200).json(donors);
   } catch (err) {
-    console.log(err);
+    console.error('Error fetching donors:', err);
     res.status(500).json({ msg: 'Server error' });
   }
 });

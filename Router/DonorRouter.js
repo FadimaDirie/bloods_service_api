@@ -25,59 +25,38 @@ DonorRouter.get('/donors', async (req, res) => {
 });
 
 
-// GET donors by blood group (with user details where isDonor is true)
-DonorRouter.get('/donors/group/:bloodGroup', async (req, res) => {
+// GET /api/donor/donors/group/:bloodType
+DonorRouter.get('/donors/group/:bloodType', async (req, res) => {
   try {
-    const donors = await Donor.aggregate([
-      // Match donors by blood group
-      { $match: { bloodGroup: req.params.bloodType } },
+    const bloodType = req.params.bloodType;
 
-      // Join with User model on phone field
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'phone',
-          foreignField: 'phone',
-          as: 'userInfo'
-        }
-      },
-
-      // Flatten the userInfo array
-      { $unwind: '$userInfo' },
-
-      // Filter only users who are donors
-      { $match: { 'userInfo.roles.isDonor': true } },
-
-      // Select required fields
-      {
-        $project: {
-          fullName: '$userInfo.fullName',
-          location: 1,
-          bloodGroup: 1,
-          fcmToken: '$userInfo.fcmToken',
-          email: '$userInfo.email',
-          age: '$userInfo.age',
-          username: '$userInfo.username',
-          phone: '$userInfo.phone',
-          profilePic: '$userInfo.profilePic',
-          roles: '$userInfo.roles',
-          createdAt: '$userInfo.createdAt',
-          updatedAt: '$userInfo.updatedAt',
-          gender: '$userInfo.gender',
-          city: '$userInfo.city',
-          latitude: '$userInfo.latitude',
-          longitude: '$userInfo.longitude'
-        }
-      }
-    ]);
+    const donors = await User.find({
+      'roles.isDonor': true,
+      bloodType: bloodType
+    }).select({
+      fullName: 1,
+      email: 1,
+      age: 1,
+      phone: 1,
+      gender: 1,
+      city: 1,
+      latitude: 1,
+      longitude: 1,
+      bloodType: 1,
+      username: 1,
+      profilePic: 1,
+      fcmToken: 1,
+      roles: 1,
+      createdAt: 1,
+      updatedAt: 1
+    });
 
     res.status(200).json(donors);
   } catch (err) {
-    console.error('Error fetching donors:', err);
+    console.error('Error fetching donors by bloodType:', err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
-
 
 
 

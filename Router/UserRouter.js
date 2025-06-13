@@ -10,7 +10,8 @@ const UserRouter = express.Router();
 const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add this at the top
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
-
+// POST /api/users/update_fcm
+UserRouter.post('/update_fcm', userController.updateFCMToken);
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -158,7 +159,6 @@ UserRouter.post('/save-token', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
-UserRouter.post('/update_fcm', userController.updateFCMToken);
 
 // ✅ GET donors by blood group using user model only
 UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {

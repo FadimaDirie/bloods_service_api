@@ -1,7 +1,6 @@
 const Order = require('../models/Order');
 const admin = require('../firebase'); // Import your firebase init
 const User = require('../models/User'); // ✅ Make sure to import User model
-const admin = require('firebase-admin');
 
 exports.createOrder = async (req, res) => {
   try {

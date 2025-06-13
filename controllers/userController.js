@@ -1,4 +1,5 @@
 const User = require('../models/User');
+
 exports.updateFCMToken = async (req, res) => {
   const { userId, fcmToken } = req.body;
 
@@ -13,4 +14,3 @@ exports.updateFCMToken = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-

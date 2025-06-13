@@ -1,11 +1,7 @@
 const admin = require('firebase-admin');
-
-// Parse the JSON string from env
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-// Replace escaped \n with real newlines in private_key
-serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+const serviceAccount = require('./path/to/firebase-service-account.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+module.exports = admin;

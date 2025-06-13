@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Donor = require('../models/donor');
 const upload = require('../middleware/upload');
+const userController = require('../controllers/userController');
+
 const UserRouter = express.Router();
 const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add this at the top
 
@@ -156,6 +158,7 @@ UserRouter.post('/save-token', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
+UserRouter.post('/users/update-fcm', userController.updateFCMToken);
 
 // ✅ GET donors by blood group using user model only
 UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {

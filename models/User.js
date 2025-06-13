@@ -13,7 +13,10 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: false },
   password: { type: String, required: true },
   profilePic: { type: String },
-  fcmToken: { type: String },
+  fcmToken: {
+    type: String,
+    default: null,
+  },
   roles: {
     isDonor: { type: Boolean, default: false },
     isRequester: { type: Boolean, default: true }

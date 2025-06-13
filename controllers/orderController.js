@@ -1,30 +1,56 @@
 const Order = require('../models/Order');
 const admin = require('../firebase'); // Import your firebase init
+const User = require('../models/User'); // ✅ Make sure to import User model
+const admin = require('firebase-admin');
 
 exports.createOrder = async (req, res) => {
   try {
-    const { requesterId, donorId, bloodType, requesterToken } = req.body;
+    const { requesterId, donorId, bloodType } = req.body;
 
-    if (!requesterId || !donorId || !bloodType || !requesterToken) {
+    if (!requesterId || !donorId || !bloodType) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // ✅ Get Donor's FCM Token from User model
+    const donorUser = await User.findById(donorId);
+    if (!donorUser || !donorUser.fcmToken) {
+      return res.status(404).json({ message: 'Donor FCM token not found' });
+    }
+
+    const donorToken = donorUser.fcmToken;
+
+    // ✅ Create the order
     const order = new Order({ requesterId, donorId, bloodType });
     await order.save();
 
-    // 🔔 Send notification
+    // ✅ Send notification to the donor
     const message = {
       notification: {
-        title: 'Order Confirmation',
-        body: 'Your blood order has been placed successfully.',
+        title: '🩸 Blood Request',
+        body: `You received a new request for blood type ${bloodType}.`,
       },
-      token: requesterToken,
+      token: donorToken,
+      android: {
+        notification: {
+          sound: 'default',
+          channelId: 'high_importance_channel',
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+          },
+        },
+      },
     };
 
     await admin.messaging().send(message);
 
-    res.status(201).json({ message: 'Order placed successfully', order });
+    res.status(201).json({ message: 'Order placed and donor notified', order });
+
   } catch (error) {
+    console.error('❌ Error placing order:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

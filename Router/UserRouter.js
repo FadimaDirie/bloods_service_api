@@ -158,7 +158,7 @@ UserRouter.post('/save-token', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
-UserRouter.post('/users/update_fcm', userController.updateFCMToken);
+UserRouter.post('/update_fcm', userController.updateFCMToken);
 
 // ✅ GET donors by blood group using user model only
 UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {

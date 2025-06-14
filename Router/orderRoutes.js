@@ -5,5 +5,6 @@ const orderController = require('../controllers/orderController');
 router.post('/orders', orderController.createOrder);
 router.get('/myorders/:userId', orderController.getMyOrders);
 const UserRouter = require('./Router/UserRouter'); // adjust path if needed
+router.put('/orders/:orderId/status', orderController.updateOrderStatus);
 
 module.exports = router;

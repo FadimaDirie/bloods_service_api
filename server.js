@@ -9,12 +9,12 @@ dotenv.config();
 const connectDB = require('./config/db');
 
 // ✅ Routers
-const UserRouter = require('./routes/UserRouter'); // 🔄 Corrected path
-const DonorRouter = require('./routes/DonorRouter');
-const OrderRoutes = require('./routes/orderRoutes');
-const RequestBloodRouter = require('./routes/RequestBloodRouter');
-const ReportRouter = require('./routes/ReportRouter');
-const NotificationRouter = require('./routes/notification');
+const UserRouter = require('./Router/UserRouter'); // 🔄 Corrected path
+const DonorRouter = require('./Router/DonorRouter');
+const OrderRoutes = require('./Router/orderRoutes');
+const RequestBloodRouter = require('./Router/RequestBloodRouter');
+const ReportRouter = require('./Router/ReportRouter');
+const NotificationRouter = require('./Router/notification');
 
 const app = express();
 

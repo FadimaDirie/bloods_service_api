@@ -65,8 +65,8 @@ exports.getMyOrders = async (req, res) => {
         { donorId: userId }
       ]
     })
-    .populate('requesterId', 'name email phone bloodType location')
-    .populate('donorId', 'name email phone bloodType location')
+    .populate('requesterId', 'fullName email phone bloodType location')
+    .populate('donorId', 'fullName email phone bloodType location')
     .sort({ createdAt: -1 });
 
     res.status(200).json({

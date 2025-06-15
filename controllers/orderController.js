@@ -1,7 +1,6 @@
 const Order = require('../models/Order');
 const admin = require('../firebase'); // Import your firebase init
 const User = require('../models/User'); // ✅ Make sure to import User model
-
 exports.createOrder = async (req, res) => {
   try {
     const { requesterId, donorId, bloodType } = req.body;
@@ -10,51 +9,52 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // ✅ Get Donor's FCM Token from User model
-    const donorUser = await User.findById(donorId);
-    if (!donorUser || !donorUser.fcmToken) {
-      return res.status(404).json({ message: 'Donor FCM token not found' });
-    }
-
-    const donorToken = donorUser.fcmToken;
-
-    // ✅ Create the order
+    // ✅ Create the order first
     const order = new Order({ requesterId, donorId, bloodType });
     await order.save();
 
-    // ✅ Send notification to the donor
-    const message = {
-      notification: {
-        title: '🩸 Blood Request',
-        body: `You received a new request for blood type ${bloodType}.`,
-      },
-      token: donorToken,
-      android: {
+    // ✅ Look up the donor's FCM token
+    const donorUser = await User.findById(donorId);
+
+    if (donorUser && donorUser.fcmToken) {
+      const donorToken = donorUser.fcmToken;
+
+      const message = {
         notification: {
-          sound: 'default',
-          channelId: 'high_importance_channel',
+          title: '🩸 Blood Request',
+          body: `You have a new request for blood type ${bloodType}.`,
         },
-      },
-      apns: {
-        payload: {
-          aps: {
+        token: donorToken,
+        android: {
+          notification: {
             sound: 'default',
+            channelId: 'high_importance_channel',
           },
         },
-      },
-    };
+        apns: {
+          payload: {
+            aps: {
+              sound: 'default',
+            },
+          },
+        },
+      };
 
-    await admin.messaging().send(message);
+      // ✅ Send push notification
+      await admin.messaging().send(message);
+      console.log('✅ Notification sent to donor');
+    } else {
+      console.log('ℹ️ Donor has no FCM token, skipping notification');
+    }
 
-    res.status(201).json({ message: 'Order placed and donor notified', order });
+    // ✅ Return response
+    res.status(201).json({ message: 'Order placed', order });
 
   } catch (error) {
     console.error('❌ Error placing order:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
-
 exports.getMyOrders = async (req, res) => {
   const { userId } = req.params;
 

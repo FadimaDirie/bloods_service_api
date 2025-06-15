@@ -7,7 +7,7 @@ router.get('/myorders/:userId', orderController.getMyOrders);
 router.put('/status', orderController.updateOrderStatus);
 
 // Use POST to allow request body
-router.post('/orders/accepted', orderController.getAcceptedOrders);
-router.post('/orders/rejected', orderController.getRejectedOrders);
+router.post('/order_by_status', orderController.getOrdersByStatus);
+
 
 module.exports = router;

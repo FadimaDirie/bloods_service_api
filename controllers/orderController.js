@@ -110,8 +110,9 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
-// Get Accepted Orders (via body)
-exports.getAcceptedOrders = async (req, res) => {
+
+
+exports.getOrdersByStatus = async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
@@ -119,59 +120,49 @@ exports.getAcceptedOrders = async (req, res) => {
   }
 
   try {
-    const orders = await Order.find({
-      $and: [
-        {
-          $or: [
-            { requesterId: userId },
-            { donorId: userId }
-          ]
-        },
-        { status: 'accepted' }
-      ]
-    })
-    .populate('requesterId', 'fullName email phone bloodType location')
-    .populate('donorId', 'fullName email phone bloodType location')
-    .sort({ createdAt: -1 });
+    // Fetch both accepted and rejected orders for the user
+    const [acceptedOrders, rejectedOrders] = await Promise.all([
+      Order.find({
+        $and: [
+          {
+            $or: [
+              { requesterId: userId },
+              { donorId: userId }
+            ]
+          },
+          { status: 'accepted' }
+        ]
+      })
+      .populate('requesterId', 'fullName email phone bloodType location')
+      .populate('donorId', 'fullName email phone bloodType location')
+      .sort({ createdAt: -1 }),
+
+      Order.find({
+        $and: [
+          {
+            $or: [
+              { requesterId: userId },
+              { donorId: userId }
+            ]
+          },
+          { status: 'rejected' }
+        ]
+      })
+      .populate('requesterId', 'fullName email phone bloodType location')
+      .populate('donorId', 'fullName email phone bloodType location')
+      .sort({ createdAt: -1 })
+    ]);
 
     res.status(200).json({
-      message: 'Accepted orders retrieved successfully',
-      total: orders.length,
-      orders
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-// Get Rejected Orders (via body)
-exports.getRejectedOrders = async (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ message: 'Missing userId in request body' });
-  }
-
-  try {
-    const orders = await Order.find({
-      $and: [
-        {
-          $or: [
-            { requesterId: userId },
-            { donorId: userId }
-          ]
-        },
-        { status: 'rejected' }
-      ]
-    })
-    .populate('requesterId', 'fullName email phone bloodType location')
-    .populate('donorId', 'fullName email phone bloodType location')
-    .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      message: 'Rejected orders retrieved successfully',
-      total: orders.length,
-      orders
+      message: 'Orders retrieved successfully',
+      accepted: {
+        total: acceptedOrders.length,
+        orders: acceptedOrders
+      },
+      rejected: {
+        total: rejectedOrders.length,
+        orders: rejectedOrders
+      }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

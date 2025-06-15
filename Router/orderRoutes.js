@@ -4,6 +4,6 @@ const orderController = require('../controllers/orderController');
 
 router.post('/orders', orderController.createOrder);
 router.get('/myorders/:userId', orderController.getMyOrders);
-router.put('/orders/status', orderController.updateOrderStatus);
+router.put('/status', orderController.updateOrderStatus);
 
 module.exports = router;

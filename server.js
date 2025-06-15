@@ -48,6 +48,7 @@ app.get('/health', (_, res) => {
 app.use('/api/user', UserRouter); // 🟢 Includes POST /update_fcm
 app.use('/api/donor', DonorRouter);
 app.use('/api/orders', OrderRoutes); // example: /api/orders/create
+app.use('/api/updateOrderStatus', OrderRoutes);
 app.use('/api/requestblood', RequestBloodRouter);
 app.use('/api/reports', ReportRouter);
 app.use('/api/notify', NotificationRouter);

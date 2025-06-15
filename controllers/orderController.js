@@ -78,12 +78,16 @@ exports.getMyOrders = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-exports.updateOrderStatus = async (req, res) => {
-  const { orderId } = req.params;
-  const { status } = req.body;
 
-  if (!status || !['accepted', 'rejected'].includes(status)) {
-    return res.status(400).json({ message: 'Invalid or missing status' });
+exports.updateOrderStatus = async (req, res) => {
+  const { orderId, status, userId } = req.body;
+
+  if (!orderId || !status || !userId) {
+    return res.status(400).json({ message: 'Missing orderId, userId, or status' });
+  }
+
+  if (!['accepted', 'rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
   }
 
   try {

@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-
 const orderSchema = new mongoose.Schema({
   requesterId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,15 +13,24 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-
+  unit: {
+    type: Number,
+    default: 1
+  },
+  hospitalName: {
+    type: String,
+    default: ''
+  },
+  patientName: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
-    default: 'waiting' // Default value is now 'waiting'
+    default: 'waiting'
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
-
-module.exports = mongoose.model('Order', orderSchema);

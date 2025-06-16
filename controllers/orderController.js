@@ -5,24 +5,31 @@ const User = require('../models/User');
 // ✅ Create a new blood order
 exports.createOrder = async (req, res) => {
   try {
-    const { requesterId, donorId, bloodType } = req.body;
+    const { requesterId, donorId, bloodType, unit, hospitalName, patientName } = req.body;
 
     if (!requesterId || !donorId || !bloodType) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Save the order
-    const order = new Order({ requesterId, donorId, bloodType });
+    // Save the order with new fields
+    const order = new Order({
+      requesterId,
+      donorId,
+      bloodType,
+      unit,
+      hospitalName,
+      patientName
+    });
     await order.save();
 
-    // Get donor info and send notification if valid token exists
+    // Notify donor if token exists
     const donorUser = await User.findById(donorId);
 
     if (donorUser?.fcmToken) {
       const message = {
         notification: {
           title: '🩸 Blood Request',
-          body: `You have a new request for blood type ${bloodType}.`,
+          body: `You have a new request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'}.`,
         },
         token: donorUser.fcmToken,
         android: {
@@ -39,7 +46,6 @@ exports.createOrder = async (req, res) => {
       } catch (fcmErr) {
         console.error('❌ FCM Error:', fcmErr.code, '-', fcmErr.message);
         if (fcmErr.code === 'messaging/registration-token-not-registered') {
-          // Optional: clear the token from DB
           await User.findByIdAndUpdate(donorId, { $unset: { fcmToken: 1 } });
           console.warn('⚠️ Invalid FCM token removed from donor record');
         }

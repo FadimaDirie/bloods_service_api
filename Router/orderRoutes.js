@@ -8,8 +8,8 @@ router.put('/status', orderController.updateOrderStatus);
 
 
 
-// New endpoints for dual roles
-router.post('/requested_by_me', orderController.getMyRequestedOrders);
-router.post('/requested_from_me', orderController.getOrdersRequestedFromMe);
+/// ✅ Corrected endpoints for dual roles
+router.post('/requested-by-me', orderController.getMyRequestedOrders);
+router.post('/requested-from-me', orderController.getOrdersRequestedFromMe);
 
 module.exports = router;

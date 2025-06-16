@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
-const admin = require('../firebase'); // Import your firebase init
-const User = require('../models/User'); // ✅ Make sure to import User model
+const admin = require('../firebase');
+const User = require('../models/User');
+
+// ✅ Create a new blood order
 exports.createOrder = async (req, res) => {
   try {
     const { requesterId, donorId, bloodType } = req.body;
@@ -9,45 +11,32 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // ✅ Create the order first
     const order = new Order({ requesterId, donorId, bloodType });
     await order.save();
 
-    // ✅ Look up the donor's FCM token
     const donorUser = await User.findById(donorId);
 
     if (donorUser && donorUser.fcmToken) {
-      const donorToken = donorUser.fcmToken;
-
       const message = {
         notification: {
           title: '🩸 Blood Request',
           body: `You have a new request for blood type ${bloodType}.`,
         },
-        token: donorToken,
+        token: donorUser.fcmToken,
         android: {
-          notification: {
-            sound: 'default',
-            channelId: 'high_importance_channel',
-          },
+          notification: { sound: 'default', channelId: 'high_importance_channel' },
         },
         apns: {
-          payload: {
-            aps: {
-              sound: 'default',
-            },
-          },
+          payload: { aps: { sound: 'default' } },
         },
       };
 
-      // ✅ Send push notification
       await admin.messaging().send(message);
       console.log('✅ Notification sent to donor');
     } else {
       console.log('ℹ️ Donor has no FCM token, skipping notification');
     }
 
-    // ✅ Return response
     res.status(201).json({ message: 'Order placed', order });
 
   } catch (error) {
@@ -55,15 +44,14 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// ✅ Get all orders where user is requester or donor
 exports.getMyOrders = async (req, res) => {
   const { userId } = req.params;
 
   try {
     const orders = await Order.find({
-      $or: [
-        { requesterId: userId },
-        { donorId: userId }
-      ]
+      $or: [{ requesterId: userId }, { donorId: userId }]
     })
     .populate('requesterId', 'fullName email phone bloodType location')
     .populate('donorId', 'fullName email phone bloodType location')
@@ -79,6 +67,7 @@ exports.getMyOrders = async (req, res) => {
   }
 };
 
+// ✅ Update status (accepted or rejected)
 exports.updateOrderStatus = async (req, res) => {
   const { orderId, status, userId } = req.body;
 
@@ -110,9 +99,8 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
-
-
-exports.getOrdersByStatus = async (req, res) => {
+// ✅ Get orders I requested (requesterId == userId)
+exports.getMyRequestedOrders = async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
@@ -120,50 +108,54 @@ exports.getOrdersByStatus = async (req, res) => {
   }
 
   try {
-    // Fetch both accepted and rejected orders for the user
-    const [acceptedOrders, rejectedOrders] = await Promise.all([
-      Order.find({
-        $and: [
-          {
-            $or: [
-              { requesterId: userId },
-              { donorId: userId }
-            ]
-          },
-          { status: 'accepted' }
-        ]
-      })
+    const requestedOrders = await Order.find({ requesterId: userId })
       .populate('requesterId', 'fullName email phone bloodType location')
       .populate('donorId', 'fullName email phone bloodType location')
-      .sort({ createdAt: -1 }),
+      .sort({ createdAt: -1 });
 
-      Order.find({
-        $and: [
-          {
-            $or: [
-              { requesterId: userId },
-              { donorId: userId }
-            ]
-          },
-          { status: 'rejected' }
-        ]
-      })
-      .populate('requesterId', 'fullName email phone bloodType location')
-      .populate('donorId', 'fullName email phone bloodType location')
-      .sort({ createdAt: -1 })
-    ]);
+    const classifyByStatus = (ordersList) => ({
+      total: ordersList.length,
+      accepted: ordersList.filter(o => o.status === 'accepted'),
+      rejected: ordersList.filter(o => o.status === 'rejected'),
+      waiting:  ordersList.filter(o => o.status === 'waiting'),
+    });
 
     res.status(200).json({
-      message: 'Orders retrieved successfully',
-      accepted: {
-        total: acceptedOrders.length,
-        orders: acceptedOrders
-      },
-      rejected: {
-        total: rejectedOrders.length,
-        orders: rejectedOrders
-      }
+      message: 'My requested orders retrieved successfully',
+      ...classifyByStatus(requestedOrders)
     });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// ✅ Get orders requested from me (donorId == userId)
+exports.getOrdersRequestedFromMe = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'Missing userId in request body' });
+  }
+
+  try {
+    const receivedOrders = await Order.find({ donorId: userId })
+      .populate('requesterId', 'fullName email phone bloodType location')
+      .populate('donorId', 'fullName email phone bloodType location')
+      .sort({ createdAt: -1 });
+
+    const classifyByStatus = (ordersList) => ({
+      total: ordersList.length,
+      accepted: ordersList.filter(o => o.status === 'accepted'),
+      rejected: ordersList.filter(o => o.status === 'rejected'),
+      waiting:  ordersList.filter(o => o.status === 'waiting'),
+    });
+
+    res.status(200).json({
+      message: 'Orders requested from me retrieved successfully',
+      ...classifyByStatus(receivedOrders)
+    });
+
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

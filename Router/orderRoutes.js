@@ -10,4 +10,8 @@ router.put('/status', orderController.updateOrderStatus);
 router.post('/order_by_status', orderController.getOrdersByStatus);
 
 
+// New endpoints for dual roles
+router.post('/requested_by_me', orderController.getMyRequestedOrders);
+router.post('/requested_from_me', orderController.getOrdersRequestedFromMe);
+
 module.exports = router;

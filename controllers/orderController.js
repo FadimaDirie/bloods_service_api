@@ -11,12 +11,14 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Save the order
     const order = new Order({ requesterId, donorId, bloodType });
     await order.save();
 
+    // Get donor info and send notification if valid token exists
     const donorUser = await User.findById(donorId);
 
-    if (donorUser && donorUser.fcmToken) {
+    if (donorUser?.fcmToken) {
       const message = {
         notification: {
           title: '🩸 Blood Request',
@@ -31,10 +33,19 @@ exports.createOrder = async (req, res) => {
         },
       };
 
-      await admin.messaging().send(message);
-      console.log('✅ Notification sent to donor');
+      try {
+        await admin.messaging().send(message);
+        console.log('✅ Notification sent to donor');
+      } catch (fcmErr) {
+        console.error('❌ FCM Error:', fcmErr.code, '-', fcmErr.message);
+        if (fcmErr.code === 'messaging/registration-token-not-registered') {
+          // Optional: clear the token from DB
+          await User.findByIdAndUpdate(donorId, { $unset: { fcmToken: 1 } });
+          console.warn('⚠️ Invalid FCM token removed from donor record');
+        }
+      }
     } else {
-      console.log('ℹ️ Donor has no FCM token, skipping notification');
+      console.log('ℹ️ Donor has no valid FCM token');
     }
 
     res.status(201).json({ message: 'Order placed', order });
@@ -48,6 +59,10 @@ exports.createOrder = async (req, res) => {
 // ✅ Get all orders where user is requester or donor
 exports.getMyOrders = async (req, res) => {
   const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'Missing userId in URL params' });
+  }
 
   try {
     const orders = await Order.find({
@@ -67,7 +82,7 @@ exports.getMyOrders = async (req, res) => {
   }
 };
 
-// ✅ Update status (accepted or rejected)
+// ✅ Update order status (accepted or rejected)
 exports.updateOrderStatus = async (req, res) => {
   const { orderId, status, userId } = req.body;
 

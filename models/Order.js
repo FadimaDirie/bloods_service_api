@@ -1,36 +1,40 @@
+const mongoose = require('mongoose'); // ✅ Required import
+
 const orderSchema = new mongoose.Schema({
   requesterId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   donorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   bloodType: {
     type: String,
-    required: true
+    required: true,
   },
   unit: {
     type: Number,
-    default: 1
+    default: 1,
   },
   hospitalName: {
     type: String,
-    default: ''
+    default: '',
   },
   patientName: {
     type: String,
-    default: ''
+    default: '',
   },
   status: {
     type: String,
-    default: 'waiting'
+    default: 'waiting',
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
+
+module.exports = mongoose.model('Order', orderSchema);

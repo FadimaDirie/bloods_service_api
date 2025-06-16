@@ -6,8 +6,6 @@ router.post('/orders', orderController.createOrder);
 router.get('/myorders/:userId', orderController.getMyOrders);
 router.put('/status', orderController.updateOrderStatus);
 
-// Use POST to allow request body
-router.post('/order_by_status', orderController.getOrdersByStatus);
 
 
 // New endpoints for dual roles

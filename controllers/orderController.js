@@ -105,16 +105,51 @@ exports.updateOrderStatus = async (req, res) => {
       orderId,
       { status },
       { new: true }
-    );
+    ).populate('requesterId', 'fullName fcmToken')
+     .populate('donorId', 'fullName bloodType');
 
     if (!updatedOrder) {
       return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // ✅ Notify the requester
+    const requester = updatedOrder.requesterId;
+    const donor = updatedOrder.donorId;
+
+    if (requester?.fcmToken) {
+      const notificationMessage = {
+        notification: {
+          title: `🩸 Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+          body: `${donor.fullName} has ${status} your request for ${donor.bloodType} blood.`,
+        },
+        token: requester.fcmToken,
+        android: {
+          notification: { sound: 'default', channelId: 'high_importance_channel' },
+        },
+        apns: {
+          payload: { aps: { sound: 'default' } },
+        },
+      };
+
+      try {
+        await admin.messaging().send(notificationMessage);
+        console.log('✅ Notification sent to requester');
+      } catch (fcmErr) {
+        console.error('❌ FCM Error:', fcmErr.code, '-', fcmErr.message);
+        if (fcmErr.code === 'messaging/registration-token-not-registered') {
+          await User.findByIdAndUpdate(requester._id, { $unset: { fcmToken: 1 } });
+          console.warn('⚠️ Invalid FCM token removed from requester record');
+        }
+      }
+    } else {
+      console.log('ℹ️ Requester has no valid FCM token');
     }
 
     res.status(200).json({
       message: `Order status updated to ${status}`,
       order: updatedOrder,
     });
+
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

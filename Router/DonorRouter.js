@@ -84,34 +84,60 @@ DonorRouter.get('/all', async (req, res) => {
 
 
 // GET /api/donors/stats-by-city
-DonorRouter.get('/stats-by-city', async (req, res) => {
+DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
+  const { search, city, bloodType } = req.query;
+
+  const match = { isDonor: true };
+
+  if (city) {
+    match.city = city;
+  }
+
+  if (bloodType) {
+    match.bloodType = bloodType;
+  }
+
+  if (search) {
+    match.fullName = { $regex: search, $options: 'i' };
+  }
+
   try {
     const result = await User.aggregate([
-      { $match: { isDonor: true } },
+      { $match: match },
       {
         $group: {
-          _id: '$city',
-          totalDonors: { $sum: 1 },
-          lat: { $first: '$latitude' },
-          lng: { $first: '$longitude' },
+          _id: { city: '$city', bloodType: '$bloodType' },
+          donors: { $push: '$fullName' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.city',
+          bloodGroups: {
+            $push: {
+              bloodType: '$_id.bloodType',
+              count: '$count',
+              donors: '$donors'
+            }
+          }
         }
       },
       {
         $project: {
+          _id: 0,
           city: '$_id',
-          totalDonors: 1,
-          lat: 1,
-          lng: 1,
-          _id: 0
+          bloodGroups: 1
         }
       }
     ]);
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ msg: 'Error', err });
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+
 const excelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');

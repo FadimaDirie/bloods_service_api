@@ -49,9 +49,10 @@ DonorRouter.get('/donors/group/:bloodType', async (req, res) => {
 // GET /api/donors/all?bloodType=A+&city=Hodan&startDate=2025-06-01&endDate=2025-06-15
 // GET /api/donors/all?search=abdi&sort=createdAt&order=desc&page=1&limit=10
 DonorRouter.get('/all', async (req, res) => {
-  const { bloodType, city, startDate, endDate, search, sort = 'createdAt', order = 'desc', page = 1, limit = 10 } = req.query;
+  const { bloodType, city, startDate, endDate, search, sort = 'createdAt', order = 'desc' } = req.query;
 
   const query = { isDonor: true };
+
   if (bloodType) query.bloodType = bloodType;
   if (city) query.city = city;
   if (startDate && endDate) {
@@ -64,28 +65,22 @@ DonorRouter.get('/all', async (req, res) => {
     query.fullName = { $regex: search, $options: 'i' };
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit);
   const sortOptions = { [sort]: order === 'asc' ? 1 : -1 };
 
   try {
-    const total = await User.countDocuments(query);
     const donors = await User.find(query)
       .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit))
       .select('-password');
 
     res.json({
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / limit),
+      total: donors.length,
       data: donors
     });
   } catch (err) {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+
 
 
 // GET /api/donors/stats-by-city

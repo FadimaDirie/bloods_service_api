@@ -101,6 +101,8 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
     match.fullName = { $regex: search, $options: 'i' };
   }
 
+  const bloodTypes = ['A+', 'O+', 'AB+', 'O-', 'A-', 'B-', 'AB-'];
+
   try {
     const result = await User.aggregate([
       { $match: match },
@@ -119,6 +121,39 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
               bloodType: '$_id.bloodType',
               count: '$count',
               donors: '$donors'
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          bloodGroups: {
+            $map: {
+              input: bloodTypes,
+              as: 'type',
+              in: {
+                $let: {
+                  vars: {
+                    match: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: '$bloodGroups',
+                            as: 'g',
+                            cond: { $eq: ['$$g.bloodType', '$$type'] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: {
+                    bloodType: '$$type',
+                    count: { $ifNull: ['$$match.count', 0] },
+                    donors: { $ifNull: ['$$match.donors', []] }
+                  }
+                }
+              }
             }
           }
         }

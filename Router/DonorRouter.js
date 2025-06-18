@@ -109,7 +109,6 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
       {
         $group: {
           _id: { city: '$city', bloodType: '$bloodType' },
-          donors: { $push: '$fullName' },
           count: { $sum: 1 }
         }
       },
@@ -119,8 +118,7 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
           bloodGroups: {
             $push: {
               bloodType: '$_id.bloodType',
-              count: '$count',
-              donors: '$donors'
+              count: '$count'
             }
           }
         }
@@ -149,8 +147,7 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
                   },
                   in: {
                     bloodType: '$$type',
-                    count: { $ifNull: ['$$match.count', 0] },
-                    donors: { $ifNull: ['$$match.donors', []] }
+                    count: { $ifNull: ['$$match.count', 0] }
                   }
                 }
               }
@@ -172,6 +169,8 @@ DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+
+
 
 const excelJS = require('exceljs');
 const PDFDocument = require('pdfkit');

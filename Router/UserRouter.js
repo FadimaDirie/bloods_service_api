@@ -17,7 +17,8 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     fullName, email, age, phone,
     bloodType, username, password,
     fcmToken, city, latitude, longitude,
-    gender
+    gender, weight, lastDonationDate,
+    availability, healthStatus
   } = req.body;
 
   try {
@@ -34,32 +35,37 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     const newUser = new User({
       fullName,
-      email: email || undefined,             // ✅ Optional
-      age: age ? parseInt(age) : undefined,  // ✅ Optional
+      email: email || undefined,
+      age: age ? parseInt(age) : undefined,
       phone,
       bloodType,
-      username: username || undefined,       // ✅ Optional
+      username: username || undefined,
       password: hashedPassword,
       profilePic,
       fcmToken,
       gender,
       city,
       latitude: latitude ? parseFloat(latitude) : undefined,
-      longitude: longitude ? parseFloat(longitude) : undefined
+      longitude: longitude ? parseFloat(longitude) : undefined,
+      weight: weight ? parseFloat(weight) : undefined,
+      lastDonationDate: lastDonationDate ? new Date(lastDonationDate) : undefined,
+      availability: availability || 'Available',
+      healthStatus: healthStatus || 'Healthy'
     });
 
     await newUser.save();
 
-    res.status(201).json({ msg: 'User registered successfully' });
+    res.status(201).json({ msg: 'User registered successfully', user: newUser });
 
   } catch (err) {
     console.error(err);
-      res.status(500).json({
+    res.status(500).json({
       msg: 'Server error',
-      error: err.message  // 👈 return readable error in Postman
-  });
+      error: err.message
+    });
   }
 });
+
 
 // ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {

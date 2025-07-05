@@ -22,6 +22,12 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   } = req.body;
 
   try {
+    // ✅ Check if user already exists by phone
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(409).json({ msg: 'User already registered with this phone number' });
+    }
+
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }

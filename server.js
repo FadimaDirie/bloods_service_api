@@ -15,6 +15,8 @@ const OrderRoutes = require('./Router/orderRoutes');
 const RequestBloodRouter = require('./Router/RequestBloodRouter');
 const ReportRouter = require('./Router/ReportRouter');
 const NotificationRouter = require('./Router/notification');
+const AppointmentRouter = require('./Router/AppointmentRouter');
+const InfoRouter = require('./Router/InfoRouter');
 
 const app = express();
 
@@ -52,6 +54,8 @@ app.use('/api/updateOrderStatus', OrderRoutes);
 app.use('/api/requestblood', RequestBloodRouter);
 app.use('/api/reports', ReportRouter);
 app.use('/api/notify', NotificationRouter);
+app.use('/api/appointments', AppointmentRouter);
+app.use('/api/info', InfoRouter);
 
 // ✅ Global Error Handler
 app.use((err, req, res, next) => {

@@ -12,6 +12,10 @@ const UserSchema = new mongoose.Schema({
   bloodType: { type: String },
   username: { type: String, required: false },
   password: { type: String, required: true },
+  lastDonationDate: {type: Date},
+  weight: {type: Number},
+  healthStatus: { type: String, enum: ['Healthy', 'Temporarily Ineligible'], default: 'Healthy' },
+  availability: { type: String, enum: ['Available', 'Busy'], default: 'Available' },
   profilePic: { type: String },
   fcmToken: {
     type: String,

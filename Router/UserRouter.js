@@ -181,4 +181,50 @@ UserRouter.get('/donors/group/:bloodGroup', async (req, res) => {
   }
 });
 
+const admin = require('../firebase'); // Make sure this is imported
+
+UserRouter.get('/:id/eligibility', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || !user.roles.isDonor) {
+      return res.status(404).json({ eligible: false, reason: 'Not a donor' });
+    }
+
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.setMonth(now.getMonth() - 6));
+
+    const eligible = (!user.lastDonationDate || user.lastDonationDate < sixMonthsAgo) &&
+                     user.age >= 18 && user.weight >= 50 && user.healthStatus === 'Healthy';
+
+    // 🔔 Send FCM notification if eligible
+    if (eligible && user.fcmToken) {
+      await admin.messaging().send({
+        token: user.fcmToken,
+        notification: {
+          title: "You're eligible to donate again!",
+          body: "Six months have passed since your last donation. Ready to save a life?"
+        }
+      });
+    }
+
+    res.json({ eligible, reason: eligible ? null : 'Donor not eligible due to age, weight, health, or recent donation' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+
+// PUT /api/users/:id/availability
+UserRouter.put('/:id/availability', async (req, res) => {
+  const { status } = req.body; // Available / Busy
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { availability: status }, { new: true });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ msg: 'Error updating availability', error: err.message });
+  }
+});
+
+
+
 module.exports = UserRouter;

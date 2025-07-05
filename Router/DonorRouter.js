@@ -82,6 +82,27 @@ DonorRouter.get('/all', async (req, res) => {
 });
 
 
+// GET /api/donors/match?bloodType=A+&city=Mogadishu
+DonorRouter.get('/match', async (req, res) => {
+  const { bloodType, city } = req.query;
+  try {
+    const donors = await User.find({
+      isDonor: true,
+      bloodType,
+      city,
+      availability: 'Available',
+      healthStatus: 'Healthy'
+    }).sort({ lastDonationDate: 1 }); // least recent first
+
+    res.json(donors);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+
+
+
 
 // GET /api/donors/stats-by-city
 DonorRouter.get('/stats-by-city-and-blood', async (req, res) => {

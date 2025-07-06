@@ -55,5 +55,15 @@ router.put('/:id/status', async (req, res) => {
     res.status(500).json({ msg: 'Failed to update status', error: err.message });
   }
 });
+// GET /appointments – Get all appointments
+router.get('/all', async (req, res) => {
+    try {
+      const appointments = await Appointment.find().sort({ date: -1 });
+      res.json(appointments);
+    } catch (err) {
+      res.status(500).json({ msg: 'Failed to fetch all appointments', error: err.message });
+    }
+  });
+  
 
 module.exports = router;

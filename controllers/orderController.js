@@ -216,3 +216,21 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// ✅ Get all orders with donor and recipient info
+exports.getAllOrdersWithUsers = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('requesterId', 'fullName email phone bloodType gender city')
+      .populate('donorId', 'fullName email phone bloodType gender city')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: 'All orders with donor and recipient info',
+      total: orders.length,
+      orders
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

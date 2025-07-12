@@ -79,8 +79,8 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
 
   try {
     const updateData = {};
-    if (typeof isDonor === 'boolean') updateData['roles.isDonor'] = isDonor;
-    if (typeof isRequester === 'boolean') updateData['roles.isRequester'] = isRequester;
+    if (typeof isDonor === 'boolean') updateData.isDonor = isDonor;
+    if (typeof isRequester === 'boolean') updateData.isRequester = isRequester;
 
     const updated = await User.findByIdAndUpdate(
       req.params.id,
@@ -92,6 +92,7 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
       return res.status(404).json({ msg: 'User not found' });
     }
 
+    // ✅ Haddii uu noqdo donor, check if exists in Donor collection
     if (isDonor === true) {
       const existingDonor = await Donor.findOne({ phone: updated.phone });
       if (!existingDonor) {
@@ -103,7 +104,6 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
           age: updated.age,
           healthStatus: 'Healthy',
           availability: 'Available',
-          // lastDonationDate: new Date().toISOString(),
           weight: 0,
           type: updated.bloodType
         });

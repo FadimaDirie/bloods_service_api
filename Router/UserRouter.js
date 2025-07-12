@@ -198,7 +198,7 @@ const admin = require('../firebase'); // Make sure this is imported
 UserRouter.get('/:id/eligibility', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user || !user.roles.isDonor) {
+    if (!user || !user.isDonor) {
       return res.status(404).json({ eligible: false, reason: 'Not a donor' });
     }
 

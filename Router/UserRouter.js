@@ -72,6 +72,17 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   }
 });
 
+UserRouter.get('/all', async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 }); // users oo ugu dambeeyey ugu horeeya
+    res.json({ users });
+  } catch (err) {
+    console.error('Fetch users error:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+
 
 // ✅ Update Role (isDonor or isRequester)
 UserRouter.put('/:id/updateRole', async (req, res) => {

@@ -259,23 +259,20 @@ UserRouter.put('/:id/availability', async (req, res) => {
 
 
 
-
-// PUT /api/user/location/:userId
-UserRouter.put('/updatelocation/:userId', async function updateLocation(req, res) {
-  const { userId } = req.params;
-  const { city, latitude, longitude } = req.body;
+UserRouter.post('/updatelocation', async (req, res) => {
+  const { userId, latitude, longitude } = req.body;
 
   try {
-    if (!city || latitude == null || longitude == null) {
+    if (!userId || latitude == null || longitude == null) {
       return res.status(400).json({
         success: false,
-        message: 'Missing city, latitude, or longitude',
+        message: 'Missing userId, latitude, or longitude',
       });
     }
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { city, latitude, longitude },
+      { latitude, longitude },
       { new: true }
     );
 
@@ -299,6 +296,7 @@ UserRouter.put('/updatelocation/:userId', async function updateLocation(req, res
     });
   }
 });
+
 
 
 module.exports = UserRouter;

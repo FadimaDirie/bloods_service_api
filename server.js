@@ -37,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Static uploads
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/upload', express.static('uploads'));
 
 // ✅ Health Check
 app.get('/', (_, res) => res.json({ message: 'Welcome to Blood Service API' }));

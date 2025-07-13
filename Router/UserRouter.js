@@ -12,6 +12,9 @@ const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 // POST /api/users/update_fcm
 UserRouter.post('/update_fcm', userController.updateFCMToken);
+
+
+
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -22,12 +25,13 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   } = req.body;
 
   try {
-    // ✅ Check if user already exists by phone
+    // 🚫 Duplicate phone check
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
       return res.status(409).json({ msg: 'User already registered with this phone number' });
     }
 
+    // 🛡️ Validation
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -36,9 +40,13 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       return res.status(400).json({ msg: 'Phone number is required' });
     }
 
+    // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const profilePic = req.file ? req.file.filename : null;
 
+    // 🖼️ Get filename
+    const profilePic = req.file ? req.file.filename.replace(/[,]/g, '') : null;
+
+    // 🆕 Create user
     const newUser = new User({
       fullName,
       email: email || undefined,
@@ -61,14 +69,18 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ msg: 'User registered successfully', user: newUser });
+    // ✅ Success response
+    res.status(201).json({
+      msg: 'User registered successfully',
+      user: {
+        ...newUser.toObject(),
+        profilePicUrl: profilePic ? `${req.protocol}://${req.get('host')}/upload/${profilePic}` : null
+      }
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      msg: 'Server error',
-      error: err.message
-    });
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 

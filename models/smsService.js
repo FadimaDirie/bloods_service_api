@@ -1,46 +1,39 @@
-// smsService.js
+// services/smsService.js
 const axios = require('axios');
 
-const SMS_API_URL = 'https://sms.tabaarak.com';
 const USERNAME = 'Bloodapp';
-const PASSWORD = 'Bloodapp$(03)'; // ← use your actual credentials
+const PASSWORD = 'Bloodapp$(03)';
+const BASE_URL = 'https://tabaarakict.so/SendSMS.aspx';
 
-let token = null;
-
-// Get and cache the token
-const getAuthToken = async () => {
-  if (token) return token;
-  try {
-    const res = await axios.post(`${SMS_API_URL}/Auth/SMSLogin`, {
-      Name: USERNAME,
-      Password: PASSWORD,
-    });
-    token = res.data.data.token;
-    return token;
-  } catch (error) {
-    console.error('❌ Error getting SMS token:', error.response?.data || error.message);
-    return null;
-  }
-};
-
-// Send SMS message
+/**
+ * Sends SMS using Tabaarak GET API
+ * @param {string} message - SMS body (must be 10+ characters)
+ * @param {string[]} phoneNumbers - e.g. ['618234567']
+ */
 const sendSMS = async (message, phoneNumbers = []) => {
-  try {
-    const token = await getAuthToken();
-    if (!token) return;
+  if (!message || message.length < 10) {
+    console.error('Message must be at least 10 characters');
+    return;
+  }
 
-    const payload = {
-      smsMessage: message,
-      mobile: phoneNumbers,
-    };
+  for (const phone of phoneNumbers) {
+    const url = `${BASE_URL}?user=${encodeURIComponent(USERNAME)}&pass=${encodeURIComponent(PASSWORD)}&cont=${encodeURIComponent(message)}&rec=${phone}`;
+    
+    try {
+      console.log(' Sending to:', phone);
+      console.log('URL:', url);
 
-    const response = await axios.post(`${SMS_API_URL}/Sms/sendsms`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      const res = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Node.js)',
+        },
+        responseType: 'text',
+      });
 
-    console.log('✅ SMS response:', response.data);
-  } catch (error) {
-    console.error('❌ SMS sending error:', error.response?.data || error.message);
+      console.log(`SMS sent to ${phone}. Response:\n`, res.data);
+    } catch (err) {
+      console.error(`Failed for ${phone}:`, err.response?.data || err.message);
+    }
   }
 };
 

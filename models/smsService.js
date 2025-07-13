@@ -1,37 +1,60 @@
 const axios = require('axios');
 
+const LOGIN_URL = 'https://sms.tabaarak.com/Auth/SMSLogin';
+const SMS_URL = 'https://sms.tabaarak.com/Sms/sendsms';
+
 const USERNAME = 'Bloodapp';
 const PASSWORD = 'Bloodapp$(03)';
-const BASE_URL = 'https://tabaarakict.so/SendSMS.aspx';
 
-/**
- * Sends SMS using Tabaarak URL-based GET API
- * @param {string} message - The message (must be 10+ chars)
- * @param {string[]} phoneNumbers - Array of recipient numbers (e.g., ['618123456'])
- */
+let token = null;
+
+// Step 1: Authenticate
+const getAuthToken = async () => {
+  if (token) return token;
+
+  try {
+    const res = await axios.post(LOGIN_URL, {
+      Name: USERNAME,
+      Password: PASSWORD,
+    });
+
+    token = res.data.data.token;
+    console.log('Got SMS API token');
+    return token;
+  } catch (err) {
+    console.error('Failed to authenticate with Tabaarak SMS API:', err.message);
+    return null;
+  }
+};
+
+// Step 2: Send SMS
 const sendSMS = async (message, phoneNumbers = []) => {
   if (!message || message.length < 10) {
-    console.error('❌ SMS message must be at least 10 characters.');
+    console.error('Message must be at least 10 characters');
     return;
   }
 
-  for (const phone of phoneNumbers) {
-    const fullURL = `${BASE_URL}?user=${encodeURIComponent(USERNAME)}&pass=${encodeURIComponent(PASSWORD)}&cont=${encodeURIComponent(message)}&rec=${phone}`;
-    
-    try {
-      console.log('📤 Sending SMS via URL:', fullURL);
-      const res = await axios.get(fullURL, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Node.js)', // mimic browser if needed
-        },
-        timeout: 8000,
-      });
+  const token = await getAuthToken();
+  if (!token) return;
 
-      const result = res.data?.Result?.Message || JSON.stringify(res.data);
-      console.log(`✅ SMS sent to ${phone}:`, result);
-    } catch (err) {
-      console.error(`❌ Failed to send SMS to ${phone}:`, err.response?.data || err.message);
-    }
+  try {
+    const response = await axios.post(
+      SMS_URL,
+      {
+        smsMessage: message,
+        mobile: phoneNumbers,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('SMS sent:', response.data);
+  } catch (err) {
+    console.error('SMS send error:', err.response?.data || err.message);
   }
 };
 

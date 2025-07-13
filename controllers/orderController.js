@@ -1,7 +1,7 @@
 const Order = require('../models/Order');
 const admin = require('../firebase');
 const User = require('../models/User');
-const { sendSMS } = require('../models/smsService'); // adjust the path as needed
+const  sendSMS  = require('../models/smsService'); 
 
 // ✅ Create a new blood order
 exports.createOrder = async (req, res) => {
@@ -25,6 +25,7 @@ exports.createOrder = async (req, res) => {
 
     // Notify donor if token exists
     const donorUser = await User.findById(donorId);
+    const messageText = `New request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'} at ${hospitalName ?? 'a hospital'}.`;
 
     if (donorUser?.fcmToken) {
       const message = {
@@ -44,13 +45,6 @@ exports.createOrder = async (req, res) => {
       try {
         await admin.messaging().send(message);
         console.log('✅ Notification sent to donor');
-
-        // 📲 Also send SMS
-       if (donorUser?.phone) {
-          const smsText = `Blood Request: New request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'} at ${hospitalName ?? 'a hospital'}.`;
-          await sendSMS(smsText, [donorUser.phone]);
-        }
-
       } catch (fcmErr) {
         console.error('❌ FCM Error:', fcmErr.code, '-', fcmErr.message);
         if (fcmErr.code === 'messaging/registration-token-not-registered') {
@@ -62,6 +56,11 @@ exports.createOrder = async (req, res) => {
       console.log('ℹ️ Donor has no valid FCM token');
     }
 
+
+     // ✅ Also send SMS to donor
+    if (donorUser?.phone) {
+      await sendSMS(messageText, [donorUser.phone]);
+    }
     res.status(201).json({ message: 'Order placed', order });
 
   } catch (error) {
@@ -123,6 +122,7 @@ exports.updateOrderStatus = async (req, res) => {
     // ✅ Notify the requester
     const requester = updatedOrder.requesterId;
     const donor = updatedOrder.donorId;
+    const smsText = `Your blood request was ${status.toUpperCase()} by ${donor.fullName} for ${donor.bloodType}.`;
 
     if (requester?.fcmToken) {
       const notificationMessage = {
@@ -142,13 +142,6 @@ exports.updateOrderStatus = async (req, res) => {
       try {
         await admin.messaging().send(notificationMessage);
         console.log('✅ Notification sent to requester');
-
-        // 📲 Also send SMS
-          if (requester?.phone) {
-              const smsText = `Blood Request ${status.toUpperCase()}: ${donor.fullName} has ${status} your request for ${donor.bloodType} blood.`;
-              await sendSMS(smsText, [requester.phone]);
-            }
-
       } catch (fcmErr) {
         console.error('❌ FCM Error:', fcmErr.code, '-', fcmErr.message);
         if (fcmErr.code === 'messaging/registration-token-not-registered') {
@@ -159,6 +152,10 @@ exports.updateOrderStatus = async (req, res) => {
     } else {
       console.log('ℹ️ Requester has no valid FCM token');
     }
+    // ✅ Also send SMS to requester
+      if (requester?.phone) {
+        await sendSMS(smsText, [requester.phone]);
+      }
 
     res.status(200).json({
       message: `Order status updated to ${status}`,

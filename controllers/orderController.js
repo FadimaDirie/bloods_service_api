@@ -1,7 +1,7 @@
 const Order = require('../models/Order');
 const admin = require('../firebase');
 const User = require('../models/User');
-const  sendSMS  = require('../models/smsService'); 
+const { sendSMS } = require('../models/smsService'); // ✅ Correct
 
 // ✅ Create a new blood order
 exports.createOrder = async (req, res) => {

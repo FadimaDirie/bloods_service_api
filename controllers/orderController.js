@@ -31,7 +31,10 @@ exports.createOrder = async (req, res) => {
       const message = {
         notification: {
           title: '🩸 Blood Request',
-          body: `You have a new request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'}.`,
+          
+          // body: `You have a new request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'}.`,
+          body: `Fadlan ka jawaab codsigan sida ugu dhaqsaha badan. Waxaa laga codsaday dhiig ${bloodType} (${unit ?? 1} unit) bukaanka ${patientName ?? 'aan la magacaabin'} oo yaala ${hospitalName ?? 'cusbitaal aan la cayimin'}.`;
+
         },
         token: donorUser.fcmToken,
         android: {
@@ -122,7 +125,9 @@ exports.updateOrderStatus = async (req, res) => {
     // ✅ Notify the requester
     const requester = updatedOrder.requesterId;
     const donor = updatedOrder.donorId;
-    const smsText = `Your blood request was ${status.toUpperCase()} by ${donor.fullName} for ${donor.bloodType}.`;
+    // const smsText = `Your blood request was ${status.toUpperCase()} by ${donor.fullName} for ${donor.bloodType}.`;
+    const smsText = `Codsigii dhiigga ee ${donor.bloodType} waxaa ${status === 'accepted' ? 'la aqbalay' : 'la diiday'} qofka ${donor.fullName}.`;
+
 
     if (requester?.fcmToken) {
       const notificationMessage = {

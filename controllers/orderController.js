@@ -47,7 +47,7 @@ exports.createOrder = async (req, res) => {
 
         // 📲 Also send SMS
        if (donorUser?.phone) {
-          const smsText = `🩸 Blood Request: New request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'} at ${hospitalName ?? 'a hospital'}.`;
+          const smsText = `Blood Request: New request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'} at ${hospitalName ?? 'a hospital'}.`;
           await sendSMS(smsText, [donorUser.phone]);
         }
 
@@ -145,7 +145,7 @@ exports.updateOrderStatus = async (req, res) => {
 
         // 📲 Also send SMS
           if (requester?.phone) {
-              const smsText = `🩸 Blood Request ${status.toUpperCase()}: ${donor.fullName} has ${status} your request for ${donor.bloodType} blood.`;
+              const smsText = `Blood Request ${status.toUpperCase()}: ${donor.fullName} has ${status} your request for ${donor.bloodType} blood.`;
               await sendSMS(smsText, [requester.phone]);
             }
 

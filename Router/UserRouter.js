@@ -12,9 +12,6 @@ const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 // POST /api/users/update_fcm
 UserRouter.post('/update_fcm', userController.updateFCMToken);
-
-
-
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -260,6 +257,48 @@ UserRouter.put('/:id/availability', async (req, res) => {
   }
 });
 
+
+
+
+// PUT /api/user/location/:userId
+UserRouter.put('/updatelocation/:userId', async function updateLocation(req, res) {
+  const { userId } = req.params;
+  const { city, latitude, longitude } = req.body;
+
+  try {
+    if (!city || latitude == null || longitude == null) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing city, latitude, or longitude',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { city, latitude, longitude },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Location updated successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error('updateLocation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
 
 
 module.exports = UserRouter;

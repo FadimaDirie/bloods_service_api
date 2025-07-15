@@ -49,9 +49,9 @@ app.get('/health', (_, res) => {
 const cityRouter = require('./Router/CityRouter');
 app.use('/api/cities', cityRouter);
 
-const healthRouter = require('./Router/HealthRouter ');
+const healthRouter = require('./Router/HealthRouter');
+app.use('/api/health', healthRouter);
 
-app.use('./api/health', healthRouter);
 
 const adminRouter = require('./Router/AdminRouter');
 app.use('/api/admin', adminRouter);

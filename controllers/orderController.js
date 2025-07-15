@@ -33,7 +33,7 @@ exports.createOrder = async (req, res) => {
           title: '🩸 Blood Request',
           
           // body: `You have a new request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'}.`,
-          body: `Fadlan ka jawaab codsigan sida ugu dhaqsaha badan. Waxaa laga codsaday dhiig ${bloodType} (${unit ?? 1} unit) bukaanka ${patientName ?? 'aan la magacaabin'} oo yaala ${hospitalName ?? 'cusbitaal aan la cayimin'}.`;
+          body: `Fadlan ka jawaab codsigan sida ugu dhaqsaha badan. Waxaa laga codsaday dhiig ${bloodType} (${unit ?? 1} unit) bukaanka ${patientName ?? 'aan la magacaabin'} oo yaala ${hospitalName ?? 'cusbitaal aan la cayimin'}.`,
 
         },
         token: donorUser.fcmToken,

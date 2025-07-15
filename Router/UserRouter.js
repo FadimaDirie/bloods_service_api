@@ -56,9 +56,8 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       profilePic,
       fcmToken,
       gender,
-      city,
-      district,
-      region,
+      city: Array.isArray(city) ? city : [],
+    
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       weight: weight ? parseFloat(weight) : undefined,

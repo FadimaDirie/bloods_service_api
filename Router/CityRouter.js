@@ -14,23 +14,18 @@ router.get('/', async (req, res) => {
 });
 
 // ✅ POST new city
-router.post('/', async (req, res) => {
-  const { name } = req.body;
 
-  if (!name) {
-    return res.status(400).json({ message: 'City name is required' });
+
+router.post('/cities', async (req, res) => {
+  const cities = req.body;
+
+  if (!Array.isArray(cities) || cities.length === 0) {
+    return res.status(400).json({ message: 'City list is required' });
   }
 
   try {
-    const existing = await City.findOne({ name });
-    if (existing) {
-      return res.status(409).json({ message: 'City already exists' });
-    }
-
-    const city = new City({ name });
-    await city.save();
-
-    res.status(201).json({ message: 'City created', city });
+    const inserted = await City.insertMany(cities);
+    res.status(201).json({ message: 'Cities added successfully', data: inserted });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

@@ -5,8 +5,8 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: false },
   age: { type: Number },
   phone: { type: String, required: true, unique: true },
-  gender: { type: String }, // ✅ gender field added
-  city: { type: String },
+  gender: { type: String, enum: ['Male', 'Female'] }, // ✅ gender field added
+  city: [String],
   latitude: { type: Number },
   longitude: { type: Number },
   bloodType: { type: String },
@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
   lastDonationDate: {type: Date},
   weight: {type: Number},
   healthStatus: { type: String, enum: ['Healthy', 'Temporarily Ineligible'], default: 'Healthy' },
+  healthChecklist: [String],
   availability: { type: String, enum: ['Available', 'Busy'], default: 'Available' },
   profilePic: { type: String },
   fcmToken: {
@@ -22,7 +23,9 @@ const UserSchema = new mongoose.Schema({
     default: null,
   },
   isDonor: { type: Boolean, default: false },
-  isRequester: { type: Boolean, default: true }
+  isRequester: { type: Boolean, default: true },
+  isAdmin: { type: Boolean, default: false }, // ✅ NEW
+  isSuspended: { type: Boolean, default: false }, // ✅ NEW
   
 }, { timestamps: true });
 

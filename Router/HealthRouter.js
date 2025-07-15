@@ -14,27 +14,21 @@ router.get('/', async (req, res) => {
 });
 
 // ✅ POST new health check item
-router.post('/', async (req, res) => {
-  const { name } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ message: 'Checklist name is required' });
-  }
-
-  try {
-    const existing = await HealthChecklist.findOne({ name });
-    if (existing) {
-      return res.status(409).json({ message: 'This checklist item already exists' });
+router.post('/health', async (req, res) => {
+    const items = req.body;
+  
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Checklist items are required' });
     }
-
-    const newCheck = new HealthChecklist({ name });
-    await newCheck.save();
-
-    res.status(201).json({ message: 'Checklist item created', item: newCheck });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-});
+  
+    try {
+      const inserted = await HealthChecklist.insertMany(items);
+      res.status(201).json({ message: 'Checklist saved', data: inserted });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  });
 
 
 module.exports = router;

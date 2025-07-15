@@ -50,7 +50,10 @@ const cityRouter = require('./Router/CityRouter');
 app.use('/api/cities', cityRouter);
 
 const HealthRouter = require ('./Router/HealthRouter ');
-app.use('./api/health', HealthRouter)
+app.use('./api/health', HealthRouter);
+
+const adminRouter = require('./Router/AdminRouter');
+app.use('/api/admin', adminRouter);
 
 // ✅ Mount Routers
 app.use('/api/user', UserRouter); // 🟢 Includes POST /update_fcm

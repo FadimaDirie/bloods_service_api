@@ -152,15 +152,23 @@ UserRouter.post('/login', async (req, res) => {
     const user = await User.findOne({ phone });
     if (!user) return res.status(400).json({ msg: 'Invalid phone number' });
 
+    // ✅ Check if account is suspended
+    if (user.isSuspended) {
+      return res.status(403).json({
+        msg: 'Your account has been suspended. Please contact support for assistance.'
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
+    // ✅ Update FCM token if provided
     if (fcmToken) {
       user.fcmToken = fcmToken;
       await user.save();
     }
 
-    await logToBlockchain(user._id); // ⬅️ Log to simulated blockchain (MongoDB)
+    await logToBlockchain(user._id); // log login
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -181,6 +189,7 @@ UserRouter.post('/login', async (req, res) => {
     res.status(500).json({ msg: 'Server error' });
   }
 });
+
 
 
 // ✅ Save FCM Token

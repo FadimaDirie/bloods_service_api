@@ -16,9 +16,10 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
     bloodType, username, password,
-    fcmToken, city, latitude, longitude,
-    gender, weight, lastDonationDate,
-    availability, healthStatus
+    fcmToken, city, district, region,
+    latitude, longitude, gender, weight,
+    lastDonationDate, availability, healthStatus,
+    healthChecklist, isAdmin
   } = req.body;
 
   try {
@@ -40,10 +41,10 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🖼️ Get filename
+    // 🖼️ Handle profile picture
     const profilePic = req.file ? req.file.filename.replace(/[,]/g, '') : null;
 
-    // 🆕 Create user
+    // 🆕 Create new user with full schema support
     const newUser = new User({
       fullName,
       email: email || undefined,
@@ -56,17 +57,21 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       fcmToken,
       gender,
       city,
+      district,
+      region,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       weight: weight ? parseFloat(weight) : undefined,
       lastDonationDate: lastDonationDate ? new Date(lastDonationDate) : undefined,
       availability: availability || 'Available',
-      healthStatus: healthStatus || 'Healthy'
+      healthStatus: healthStatus || 'Healthy',
+      healthChecklist: Array.isArray(healthChecklist) ? healthChecklist : [],
+      isAdmin: isAdmin === true || isAdmin === 'true',  // convert string "true" to boolean
+      isSuspended: false // default
     });
 
     await newUser.save();
 
-    // ✅ Success response
     res.status(201).json({
       msg: 'User registered successfully',
       user: {
@@ -76,10 +81,11 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error('❌ Registration error:', err);
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+
 
 UserRouter.get('/all', async (req, res) => {
   try {

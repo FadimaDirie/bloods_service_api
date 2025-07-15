@@ -46,6 +46,12 @@ app.get('/health', (_, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running', database: dbStatus });
 });
 
+const cityRouter = require('./Router/CityRouter');
+app.use('/api/cities', cityRouter);
+
+const HealthRouter = require ('./Router/HealthRouter ');
+app.use('./api/health', HealthRouter)
+
 // ✅ Mount Routers
 app.use('/api/user', UserRouter); // 🟢 Includes POST /update_fcm
 app.use('/api/donor', DonorRouter);

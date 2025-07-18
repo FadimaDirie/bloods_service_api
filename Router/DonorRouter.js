@@ -14,7 +14,6 @@ DonorRouter.post('/donors', async (req, res) => {
   }
 });
 
-// GET /api/donor/donors/group/:bloodType
 DonorRouter.get('/donors/group/:bloodType', async (req, res) => {
   try {
     const donors = await User.find({
@@ -35,6 +34,7 @@ DonorRouter.get('/donors/group/:bloodType', async (req, res) => {
       fcmToken: 1,
       isDonor: 1,
       isRequester: 1,
+      lastDonationDate: 1, // ✅ Include this line
       createdAt: 1,
       updatedAt: 1
     });

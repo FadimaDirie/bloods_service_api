@@ -97,8 +97,6 @@ exports.getMyOrders = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-
-// ✅ Update order status (accepted or rejected)
 exports.updateOrderStatus = async (req, res) => {
   const { orderId, status, userId } = req.body;
 
@@ -106,7 +104,7 @@ exports.updateOrderStatus = async (req, res) => {
     return res.status(400).json({ message: 'Missing orderId, userId, or status' });
   }
 
-  if (!['accepted', 'rejected'].includes(status)) {
+  if (!['accepted', 'rejected', 'confirmed'].includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
@@ -115,24 +113,37 @@ exports.updateOrderStatus = async (req, res) => {
       orderId,
       { status },
       { new: true }
-    ).populate('requesterId', 'fullName fcmToken')
+    ).populate('requesterId', 'fullName fcmToken phone')
      .populate('donorId', 'fullName bloodType');
 
     if (!updatedOrder) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // ✅ Notify the requester
     const requester = updatedOrder.requesterId;
     const donor = updatedOrder.donorId;
-    // const smsText = `Your blood request was ${status.toUpperCase()} by ${donor.fullName} for ${donor.bloodType}.`;
-    const smsText = `Codsigii dhiigga ee ${donor.bloodType} waxaa ${status === 'accepted' ? 'la aqbalay' : 'la diiday'} qofka ${donor.fullName}.`;
 
+    // ✅ If confirmed, update donor's lastDonationDate
+    if (status === 'confirmed') {
+      await User.findByIdAndUpdate(userId, {
+        lastDonationDate: new Date()
+      });
+    }
 
+    // ✅ Compose message
+    const statusText = status === 'accepted'
+      ? 'la aqbalay'
+      : status === 'rejected'
+      ? 'la diiday'
+      : 'la xaqiijiyay';
+
+    const smsText = `Codsigii dhiigga ee ${donor.bloodType} waxaa ${statusText} qofka ${donor.fullName}.`;
+
+    // ✅ Send FCM
     if (requester?.fcmToken) {
       const notificationMessage = {
         notification: {
-          title: `🩸 Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+          title: `🩸 Request ${status.charAt(0).toUpperCase() + status.slice(1)}`,
           body: `${donor.fullName} has ${status} your request for ${donor.bloodType} blood.`,
         },
         token: requester.fcmToken,
@@ -157,10 +168,11 @@ exports.updateOrderStatus = async (req, res) => {
     } else {
       console.log('ℹ️ Requester has no valid FCM token');
     }
-    // ✅ Also send SMS to requester
-      if (requester?.phone) {
-        await sendSMS(smsText, [requester.phone]);
-      }
+
+    // ✅ Send SMS
+    if (requester?.phone) {
+      await sendSMS(smsText, [requester.phone]);
+    }
 
     res.status(200).json({
       message: `Order status updated to ${status}`,
@@ -222,7 +234,6 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
       accepted: ordersList.filter(o => o.status === 'accepted'),
       rejected: ordersList.filter(o => o.status === 'rejected'),
       waiting:  ordersList.filter(o => o.status === 'waiting'),
-      confirmed: ordersList.filter(o => o.status === 'confirmed'), // ✅ added
     });
 
     res.status(200).json({

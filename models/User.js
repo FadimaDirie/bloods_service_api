@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
   lastDonationDate: {type: Date},
   weight: {type: Number},
   healthStatus: { type: String, enum: ['Healthy', 'Temporarily Ineligible'], default: 'Healthy' },
-  healthChecklist: { type: Boolean, default: true },
+  healthChecklist: { type: Boolean},
   availability: { type: String, enum: ['Available', 'Busy'], default: 'Available' },
   profilePic: { type: String },
   fcmToken: {

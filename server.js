@@ -56,6 +56,10 @@ app.use('/api/health', healthRouter);
 const adminRouter = require('./Router/AdminRouter');
 app.use('/api/admin', adminRouter);
 
+const statsRoutes = require('./Router/loginlog');
+app.use('/api', statsRoutes);
+
+
 // ✅ Mount Routers
 app.use('/api/user', UserRouter); // 🟢 Includes POST /update_fcm
 app.use('/api/donor', DonorRouter);

@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
   age: { type: Number },
   phone: { type: String, required: true, unique: true },
   gender: { type: String, enum: ['Male', 'Female'] }, // ✅ gender field added
-  city: [String],
+  city: {type: String},
   latitude: { type: Number },
   longitude: { type: Number },
   bloodType: { type: String },

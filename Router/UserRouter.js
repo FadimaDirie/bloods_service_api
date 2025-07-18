@@ -12,6 +12,7 @@ const { logToBlockchain } = require('../utils/blockchainLogger'); // ⬅️ Add 
 const JWT_SECRET = process.env.JWT_SECRET || 'mySecretKey';
 // POST /api/users/update_fcm
 UserRouter.post('/update_fcm', userController.updateFCMToken);
+
 UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
   const {
     fullName, email, age, phone,
@@ -29,7 +30,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       return res.status(409).json({ msg: 'User already registered with this phone number' });
     }
 
-    // 🛡️ Validation
+    // 🛡️ Basic validation
     if (!password || typeof password !== 'string') {
       return res.status(400).json({ msg: 'Valid password is required' });
     }
@@ -44,7 +45,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     // 🖼️ Handle profile picture
     const profilePic = req.file ? req.file.filename.replace(/[,]/g, '') : null;
 
-    // 🆕 Create new user with full schema support
+    // ✅ Final user creation
     const newUser = new User({
       fullName,
       email: email || undefined,
@@ -56,17 +57,16 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
       profilePic,
       fcmToken,
       gender,
-      city: Array.isArray(city) ? city : [],
-    
+      city: typeof city === 'string' ? city : undefined,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       weight: weight ? parseFloat(weight) : undefined,
       lastDonationDate: lastDonationDate ? new Date(lastDonationDate) : undefined,
       availability: availability || 'Available',
       healthStatus: healthStatus || 'Healthy',
-      healthChecklist: Array.isArray(healthChecklist) ? healthChecklist : [],
-      isAdmin: isAdmin === true || isAdmin === 'true',  // convert string "true" to boolean
-      isSuspended: false // default
+      healthChecklist: healthChecklist === 'true' || healthChecklist === true,
+      isAdmin: isAdmin === 'true' || isAdmin === true,
+      isSuspended: false
     });
 
     await newUser.save();
@@ -84,6 +84,7 @@ UserRouter.post('/register', upload.single('profilePic'), async (req, res) => {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+
 
 
 UserRouter.get('/all', async (req, res) => {

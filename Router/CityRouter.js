@@ -4,7 +4,7 @@ const router = express.Router();
 const City = require('../models/City');
 
 // ✅ GET all cities
-router.get('/', async (req, res) => {
+router.get('/allcities', async (req, res) => {
   try {
     const cities = await City.find({}, 'name'); // only return name field
     res.status(200).json(cities);

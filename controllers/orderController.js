@@ -222,6 +222,7 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
       accepted: ordersList.filter(o => o.status === 'accepted'),
       rejected: ordersList.filter(o => o.status === 'rejected'),
       waiting:  ordersList.filter(o => o.status === 'waiting'),
+      confirmed: ordersList.filter(o => o.status === 'confirmed'), // ✅ added
     });
 
     res.status(200).json({

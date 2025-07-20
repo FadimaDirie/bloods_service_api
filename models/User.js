@@ -24,8 +24,8 @@ const UserSchema = new mongoose.Schema({
   },
   isDonor: { type: Boolean, default: false },
   isRequester: { type: Boolean, default: true },
-  isAdmin: { type: Boolean, default: false }, // ✅ NEW
-  isSuspended: { type: Boolean, default: false }, // ✅ NEW
+  isAdmin: { type: Boolean, default: false }, 
+  isSuspended: { type: Boolean, default: false }, 
   
 }, { timestamps: true });
 

@@ -19,6 +19,27 @@ router.patch('/suspend/:id', async (req, res) => {
   res.json({ msg: `User ${user.isSuspended ? 'suspended' : 'activated'}`, user });
 });
 
+// ✅ Unsuspend user explicitly
+router.patch('/unsuspend/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
+
+    if (!user.isSuspended) {
+      return res.status(200).json({ success: true, msg: 'User is already active', user });
+    }
+
+    user.isSuspended = false;
+    await user.save();
+
+    res.json({ success: true, msg: 'User successfully reactivated', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, msg: 'Server error', error });
+  }
+});
+
+
 // ✅ Promote/demote admin
 router.patch('/admin/:id', async (req, res) => {
   const user = await User.findById(req.params.id);

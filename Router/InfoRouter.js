@@ -54,18 +54,43 @@ router.get('/health-tips', (req, res) => {
 // ✅ ADD THIS BELOW
 // GET /api/info/compatibility
 router.get('/compatibility', (req, res) => {
-    const matrix = {
-      'A+': ['A+', 'AB+'],
-      'O+': ['O+', 'A+', 'B+', 'AB+'],
-      'B+': ['B+', 'AB+'],
-      'AB+': ['AB+'],
-      'A-': ['A-', 'A+', 'AB-', 'AB+'],
-      'O-': ['Everyone'],
-      'B-': ['B-', 'B+', 'AB-', 'AB+'],
-      'AB-': ['AB-', 'AB+']
-    };
-    res.json(matrix);
-  });
+  const compatibility = {
+    "O-": {
+      givesTo: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      receivesFrom: ["O-"]
+    },
+    "O+": {
+      givesTo: ["A+", "B+", "AB+", "O+"],
+      receivesFrom: ["O+", "O-"]
+    },
+    "A-": {
+      givesTo: ["A+", "A-", "AB+", "AB-"],
+      receivesFrom: ["A-", "O-"]
+    },
+    "A+": {
+      givesTo: ["A+", "AB+"],
+      receivesFrom: ["A+", "A-", "O+", "O-"]
+    },
+    "B-": {
+      givesTo: ["B+", "B-", "AB+", "AB-"],
+      receivesFrom: ["B-", "O-"]
+    },
+    "B+": {
+      givesTo: ["B+", "AB+"],
+      receivesFrom: ["B+", "B-", "O+", "O-"]
+    },
+    "AB-": {
+      givesTo: ["AB+", "AB-"],
+      receivesFrom: ["AB-", "A-", "B-", "O-"]
+    },
+    "AB+": {
+      givesTo: ["AB+"],
+      receivesFrom: ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
+    }
+  };
+
+  res.json({ success: true, compatibility });
+});
 
 
 

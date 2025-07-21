@@ -106,51 +106,54 @@ DonorRouter.get('/match', async (req, res) => {
 
 DonorRouter.get('/coverage-by-city', async (req, res) => {
   try {
-    // Get all donor cities directly from User collection
-    const donorsByCity = await User.aggregate([
+    const result = await City.aggregate([
       {
-        $match: {
-          isDonor: true,
-          isSuspended: false,
-          availability: 'Available',
-          city: { $exists: true, $ne: null }
-        }
-      },
-      {
-        $addFields: {
-          cityProcessed: {
-            $cond: [
-              { $isArray: "$city" },
-              { $arrayElemAt: ["$city", 0] },
-              "$city"
-            ]
-          }
-        }
-      },
-      {
-        $group: {
-          _id: "$cityProcessed",
-          count: { $sum: 1 },
-          latitude: { $first: "$latitude" },
-          longitude: { $first: "$longitude" }
+        $lookup: {
+          from: "users", // Collection name ee User
+          let: { cityName: "$name" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$isDonor", true] },
+                    { $eq: ["$isSuspended", false] },
+                    { $eq: ["$availability", "Available"] },
+                    {
+                      $or: [
+                        {
+                          $and: [
+                            { $isArray: "$city" },
+                            { $in: ["$$cityName", "$city"] }
+                          ]
+                        },
+                        { $eq: ["$city", "$$cityName"] }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "donors"
         }
       },
       {
         $project: {
-          city: "$_id",
-          count: 1,
-          latitude: 1,
-          longitude: 1,
-          _id: 0
+          city: "$name",
+          count: { $size: "$donors" },
+          latitude: { $first: "$donors.latitude" },
+          longitude: { $first: "$donors.longitude" }
         }
       }
     ]);
 
-    res.json({ success: true, data: donorsByCity });
+    res.json({ success: true, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 DonorRouter.get('/city-debug', async (req, res) => {
   try {

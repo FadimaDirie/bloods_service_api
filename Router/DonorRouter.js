@@ -111,6 +111,21 @@ DonorRouter.get('/byBloodtype', async (req, res) => {
   }
 });
 
+DonorRouter.get('/donersbyLocation', async (req, res) => {
+  try {
+    const donors = await User.find(
+      { isDonor: true, latitude: { $ne: null }, longitude: { $ne: null } },
+      { fullName: 1, latitude: 1, longitude: 1, bloodType: 1, _id: 0 }
+    );
+
+    res.json({
+      success: true,
+      data: donors
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: 'Server error', error: err.message });
+  }
+});
 
 // GET /api/donors/match?bloodType=A+&city=Mogadishu
 DonorRouter.get('/match', async (req, res) => {

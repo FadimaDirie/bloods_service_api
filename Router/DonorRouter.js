@@ -216,6 +216,50 @@ DonorRouter.get('/city-debug', async (req, res) => {
 
 
 
+// Summary route
+DonorRouter.get('/summary-by-status', async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          status: { $in: ['accepted', 'rejected', 'waiting', 'confirmed'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          totalUnits: { $sum: '$unit' },
+          count: { $sum: 1 }
+        }
+      }
+    ];
+
+    const results = await Order.aggregate(pipeline);
+
+    const summary = {
+      accepted: { units: 0, count: 0 },
+      rejected: { units: 0, count: 0 },
+      waiting: { units: 0, count: 0 },
+      confirmed: { units: 0, count: 0 }
+    };
+
+    results.forEach(r => {
+      summary[r._id] = {
+        units: r.totalUnits,
+        count: r.count
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: 'Blood unit summary by status',
+      data: summary
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 
 // GET /api/donors/stats-by-city

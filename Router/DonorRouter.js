@@ -1,7 +1,9 @@
 const express = require('express');
 const DonorRouter = express.Router();
 const Donor = require('../models/donor')
-const User = require('../models/User');   // your User model
+const User = require('../models/User'); 
+const City = require('../models/City'); // ama path sax ah haddii uu yahay './models/City'
+  // your User model
 
 // POST /api/donors
 DonorRouter.post('/donors', async (req, res) => {

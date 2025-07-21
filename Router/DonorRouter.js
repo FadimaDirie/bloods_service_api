@@ -106,7 +106,21 @@ DonorRouter.get('/match', async (req, res) => {
 DonorRouter.get('/coverage-map', async (req, res) => {
   try {
     const donorsByLocation = await User.aggregate([
-      { $match: { isDonor: true, isSuspended: false, availability: 'Available' } },
+      {
+        $match: {
+          isDonor: true,
+          isSuspended: false,
+          availability: 'Available',
+          city: { $exists: true, $ne: null }
+        }
+      },
+      // Unwind if city is array
+      {
+        $unwind: {
+          path: "$city",
+          preserveNullAndEmptyArrays: true
+        }
+      },
       {
         $group: {
           _id: {

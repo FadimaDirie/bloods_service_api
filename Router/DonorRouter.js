@@ -82,6 +82,34 @@ DonorRouter.get('/all', async (req, res) => {
     res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
+DonorRouter.get('/byBloodtype', async (req, res) => {
+  try {
+    const result = await User.aggregate([
+      { $match: { isDonor: true } }, // Only donors
+      {
+        $group: {
+          _id: '$bloodType',
+          totalDonors: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          bloodType: '$_id',
+          totalDonors: 1,
+          _id: 0
+        }
+      },
+      { $sort: { bloodType: 1 } } // Optional: sort alphabetically by blood type
+    ]);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: 'Server error', error: err.message });
+  }
+});
 
 
 // GET /api/donors/match?bloodType=A+&city=Mogadishu

@@ -106,18 +106,30 @@ DonorRouter.get('/match', async (req, res) => {
 
 DonorRouter.get('/coverage-by-city', async (req, res) => {
   try {
-    const citiesList = await City.find().lean(); // from your City collection
-    const donors = await User.aggregate([
+    // Get all donor cities directly from User collection
+    const donorsByCity = await User.aggregate([
       {
         $match: {
           isDonor: true,
           isSuspended: false,
-          availability: 'Available'
+          availability: 'Available',
+          city: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $addFields: {
+          cityProcessed: {
+            $cond: [
+              { $isArray: "$city" },
+              { $arrayElemAt: ["$city", 0] },
+              "$city"
+            ]
+          }
         }
       },
       {
         $group: {
-          _id: "$city",
+          _id: "$cityProcessed",
           count: { $sum: 1 },
           latitude: { $first: "$latitude" },
           longitude: { $first: "$longitude" }
@@ -134,18 +146,12 @@ DonorRouter.get('/coverage-by-city', async (req, res) => {
       }
     ]);
 
-    // Map city names correctly using your static city list
-    const cityMap = {};
-    citiesList.forEach(c => cityMap[c.name] = true);
-
-    // Filter only cities that are in city list
-    const filtered = donors.filter(d => cityMap[d.city]);
-
-    res.json({ success: true, data: filtered });
+    res.json({ success: true, data: donorsByCity });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 

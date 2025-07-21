@@ -102,6 +102,39 @@ DonorRouter.get('/match', async (req, res) => {
 
 
 
+// DonorRouter.js or routes/donor.js
+DonorRouter.get('/coverage-map', async (req, res) => {
+  try {
+    const donorsByLocation = await User.aggregate([
+      { $match: { isDonor: true, isSuspended: false, availability: 'Available' } },
+      {
+        $group: {
+          _id: {
+            city: "$city",
+            latitude: "$latitude",
+            longitude: "$longitude"
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          city: "$_id.city",
+          latitude: "$_id.latitude",
+          longitude: "$_id.longitude",
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({ success: true, data: donorsByLocation });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 
 
 // GET /api/donors/stats-by-city

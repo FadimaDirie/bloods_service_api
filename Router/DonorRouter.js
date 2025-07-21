@@ -152,6 +152,20 @@ DonorRouter.get('/coverage-by-city', async (req, res) => {
   }
 });
 
+DonorRouter.get('/city-debug', async (req, res) => {
+  try {
+    const donors = await User.find(
+      { isDonor: true, isSuspended: false, availability: 'Available' },
+      { city: 1, latitude: 1, longitude: 1, _id: 0 }
+    ).lean();
+
+    res.json({ count: donors.length, donors });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 
 

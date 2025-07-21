@@ -103,13 +103,12 @@ DonorRouter.get('/match', async (req, res) => {
 });
 
 
-
 DonorRouter.get('/coverage-by-city', async (req, res) => {
   try {
     const result = await City.aggregate([
       {
         $lookup: {
-          from: "users", // Collection name ee User
+          from: "users",
           let: { cityName: "$name" },
           pipeline: [
             {
@@ -121,13 +120,13 @@ DonorRouter.get('/coverage-by-city', async (req, res) => {
                     { $eq: ["$availability", "Available"] },
                     {
                       $or: [
+                        { $eq: ["$city", "$$cityName"] }, // city as string
                         {
                           $and: [
                             { $isArray: "$city" },
                             { $in: ["$$cityName", "$city"] }
                           ]
-                        },
-                        { $eq: ["$city", "$$cityName"] }
+                        }
                       ]
                     }
                   ]
@@ -140,6 +139,7 @@ DonorRouter.get('/coverage-by-city', async (req, res) => {
       },
       {
         $project: {
+          _id: 1,
           city: "$name",
           count: { $size: "$donors" },
           latitude: { $first: "$donors.latitude" },
@@ -153,6 +153,7 @@ DonorRouter.get('/coverage-by-city', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 
 DonorRouter.get('/city-debug', async (req, res) => {

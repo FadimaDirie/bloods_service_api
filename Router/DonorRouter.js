@@ -2,7 +2,8 @@ const express = require('express');
 const DonorRouter = express.Router();
 const Donor = require('../models/donor')
 const User = require('../models/User'); 
-const City = require('../models/City'); // ama path sax ah haddii uu yahay './models/City'
+const City = require('../models/City'); 
+const Order = require('../models/Order');// ama path sax ah haddii uu yahay './models/City'
   // your User model
 
 // POST /api/donors

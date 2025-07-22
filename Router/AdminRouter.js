@@ -39,6 +39,41 @@ router.patch('/unsuspend/:id', async (req, res) => {
   }
 });
 
+// Suspend ALL users
+router.patch('/suspend-all', async (req, res) => {
+  try {
+    const result = await User.updateMany(
+      { isSuspended: { $ne: true } }, // only if not already suspended
+      { $set: { isSuspended: true } }
+    );
+
+    res.json({
+      success: true,
+      msg: `${result.modifiedCount} user(s) suspended`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, msg: 'Server error', error });
+  }
+});
+
+// Unsuspend ALL users
+router.patch('/unsuspend-all', async (req, res) => {
+  try {
+    const result = await User.updateMany(
+      { isSuspended: true }, // only if currently suspended
+      { $set: { isSuspended: false } }
+    );
+
+    res.json({
+      success: true,
+      msg: `${result.modifiedCount} user(s) unsuspended`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, msg: 'Server error', error });
+  }
+});
 
 // ✅ Promote/demote admin
 router.patch('/admin/:id', async (req, res) => {

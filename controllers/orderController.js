@@ -268,11 +268,9 @@ exports.getAllStatusesForOrdersRequestedFromMe = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
-
-
 // ✅ Get all orders with donor and recipient info
 exports.getAllOrdersWithUsers = async (req, res) => {
   try {

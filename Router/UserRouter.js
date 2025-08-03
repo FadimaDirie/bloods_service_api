@@ -312,6 +312,77 @@ UserRouter.post('/updatelocation', async (req, res) => {
   }
 });
 
+// ✅ UPDATE USER PROFILE
+UserRouter.put('/:id/update', upload.single('profilePic'), async (req, res) => {
+  try {
+    const {
+      fullName,
+      email,
+      age,
+      phone,
+      bloodType,
+      city,
+      district,
+      region,
+      latitude,
+      longitude,
+      gender,
+      weight,
+      availability,
+      healthStatus,
+      lastDonationDate
+    } = req.body;
+
+    const updates = {
+      ...(fullName && { fullName }),
+      ...(email && { email }),
+      ...(phone && { phone }),
+      ...(bloodType && { bloodType }),
+      ...(city && { city }),
+      ...(district && { district }),
+      ...(region && { region }),
+      ...(gender && { gender }),
+      ...(availability && { availability }),
+      ...(healthStatus && { healthStatus }),
+      ...(age ? { age: parseInt(age) } : {}),
+      ...(weight ? { weight: parseFloat(weight) } : {}),
+      ...(latitude ? { latitude: parseFloat(latitude) } : {}),
+      ...(longitude ? { longitude: parseFloat(longitude) } : {}),
+      ...(lastDonationDate ? { lastDonationDate: new Date(lastDonationDate) } : {})
+    };
+
+    // ✅ Handle optional profile picture update
+    if (req.file) {
+      updates.profilePic = req.file.filename.replace(/[,]/g, '');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.json({
+      msg: 'User updated successfully',
+      user: {
+        ...updatedUser.toObject(),
+        profilePicUrl: updatedUser.profilePic
+          ? `${req.protocol}://${req.get('host')}/upload/${updatedUser.profilePic}`
+          : null
+      }
+    });
+
+  } catch (err) {
+    console.error('Update user error:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
+
 
 
 module.exports = UserRouter;

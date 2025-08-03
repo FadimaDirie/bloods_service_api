@@ -312,6 +312,31 @@ UserRouter.post('/updatelocation', async (req, res) => {
   }
 });
 
+// POST: Update all users who don't have 'units' field
+UserRouter.post('/update-units-if-missing', async (req, res) => {
+  try {
+    // Update all users where 'units' is missing
+    const result = await User.updateMany(
+      { units: { $exists: false } },
+      { $set: { units: 500 } }
+    );
+
+    res.json({
+      success: true,
+      message: 'Users updated with units where missing',
+      matched: result.matchedCount || result.n,
+      modified: result.modifiedCount || result.nModified,
+    });
+  } catch (error) {
+    console.error('updateUnits error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
+
+
 
 const { requireAdmin } = require('../middleware/auth');
 // ✅ UPDATE USER PROFILE

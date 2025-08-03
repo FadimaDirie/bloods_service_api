@@ -247,7 +247,8 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
   }
 };
 
-// ✅ Return all orders with all statuses for a specific donor
+
+// ✅ Return all orders that I (userId) requested from others
 exports.getAllStatusesForOrdersRequestedFromMe = async (req, res) => {
   const { userId } = req.body;
 
@@ -256,21 +257,25 @@ exports.getAllStatusesForOrdersRequestedFromMe = async (req, res) => {
   }
 
   try {
-    const allOrders = await Order.find({ donorId: userId })
+    const allOrders = await Order.find({ requesterId: userId }) // ✅ updated here
       .populate('requesterId', 'fullName email phone bloodType location')
       .populate('donorId', 'fullName email phone bloodType location')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
-      message: 'All orders with all statuses retrieved successfully',
+      message: 'All orders I requested retrieved successfully',
       total: allOrders.length,
       orders: allOrders
     });
 
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
+
+
+
+
 // ✅ Get all orders with donor and recipient info
 exports.getAllOrdersWithUsers = async (req, res) => {
   try {

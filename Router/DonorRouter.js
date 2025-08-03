@@ -39,7 +39,8 @@ DonorRouter.get('/donors/group/:bloodType', async (req, res) => {
       isRequester: 1,
       lastDonationDate: 1, // ✅ Include this line
       createdAt: 1,
-      updatedAt: 1
+      updatedAt: 1,
+      units: 1 // ✅ Include the new field
     });
 
     res.status(200).json(donors);

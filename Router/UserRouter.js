@@ -312,8 +312,10 @@ UserRouter.post('/updatelocation', async (req, res) => {
   }
 });
 
+
+const { requireAdmin } = require('../middleware/auth');
 // ✅ UPDATE USER PROFILE
-UserRouter.put('/:id/update', upload.single('profilePic'), async (req, res) => {
+UserRouter.put('/:id/update', requireAdmin, upload.single('profilePic'), async (req, res) => {
   try {
     const {
       fullName,

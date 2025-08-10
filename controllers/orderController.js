@@ -324,3 +324,114 @@ exports.getAcceptedOrdersRequestedFromMe = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+exports.approveOrderAndRewardDonor = async (req, res) => {
+  const { orderId, userId, rewardPoints = 50 } = req.body;
+
+  if (!orderId || !userId) {
+    return res.status(400).json({ message: 'Missing orderId or userId' });
+  }
+
+  try {
+    // 1) Update order status -> "approved"
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { status: 'approved' },
+      { new: true }
+    )
+      .populate('requesterId', 'fullName fcmToken phone')
+      .populate('donorId', 'fullName fcmToken phone bloodType');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const requester = order.requesterId;
+    const donor     = order.donorId;
+
+    // 2) Reward donor (+points) & set lastDonationDate
+    if (donor?._id) {
+      await User.findByIdAndUpdate(
+        donor._id,
+        {
+          $inc: { rewardPoints: rewardPoints },         // creates if missing
+          $set: { lastDonationDate: new Date() }
+        },
+        { new: true }
+      );
+    }
+
+    // 3) Compose donor “thank you” messages
+    const thankTitle = 'Thank you for donating! ';
+    const thankBody  = `You earned +${rewardPoints} points for donating ${order.unit || 1} unit(s) of ${order.bloodType} to ${requester?.fullName || 'a patient'}.`;
+
+    // 4) FCM to donor (reward/thanks)
+    if (donor?.fcmToken) {
+      const donorMsg = {
+        notification: { title: thankTitle, body: thankBody },
+        token: donor.fcmToken,
+        android: { notification: { sound: 'default', channelId: 'high_importance_channel' } },
+        apns: { payload: { aps: { sound: 'default' } } },
+      };
+
+      try {
+        await admin.messaging().send(donorMsg);
+        console.log(' Reward/Thanks notification sent to donor');
+      } catch (fcmErr) {
+        console.error(' FCM Error (donor):', fcmErr.code, '-', fcmErr.message);
+        if (fcmErr.code === 'messaging/registration-token-not-registered') {
+          await User.findByIdAndUpdate(donor._id, { $unset: { fcmToken: 1 } });
+          console.warn('Invalid FCM token removed from donor record');
+        }
+      }
+    } else {
+      console.log('ℹ Donor has no valid FCM token');
+    }
+
+    // 5) Optional SMS to donor (reward/thanks)
+    if (donor?.phone) {
+      const smsText = `Mahadsanid deeq dhiig! Waxaad heshay +${rewardPoints} dhibco. Nooc: ${order.bloodType}, Qadarka: ${order.unit || 1}.`;
+      try {
+        await sendSMS(smsText, [donor.phone]);
+      } catch (e) {
+        console.warn('SMS send failed (donor):', e.message);
+      }
+    }
+
+    // (Optional) notify requester that order got approved
+    if (requester?.fcmToken) {
+      const requesterMsg = {
+        notification: {
+          title: 'Request Approved ',
+          body: `${donor?.fullName || 'Donor'} approved your request for ${order.bloodType} blood.`,
+        },
+        token: requester.fcmToken,
+        android: { notification: { sound: 'default', channelId: 'high_importance_channel' } },
+        apns: { payload: { aps: { sound: 'default' } } },
+      };
+
+      try {
+        await admin.messaging().send(requesterMsg);
+        console.log(' Approval notification sent to requester');
+      } catch (fcmErr) {
+        console.error(' FCM Error (requester):', fcmErr.code, '-', fcmErr.message);
+        if (fcmErr.code === 'messaging/registration-token-not-registered') {
+          await User.findByIdAndUpdate(requester._id, { $unset: { fcmToken: 1 } });
+          console.warn(' Invalid FCM token removed from requester record');
+        }
+      }
+    }
+
+    // 6) Done
+    return res.status(200).json({
+      message: 'Order approved, donor rewarded and thanked.',
+      rewardPoints,
+      order
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

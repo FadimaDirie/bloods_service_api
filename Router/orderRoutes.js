@@ -13,7 +13,7 @@ router.post('/requested-by-me', orderController.getMyRequestedOrders);
 router.post('/requested-from-me', orderController.getOrdersRequestedFromMe);
 router.post('/requestedFromMe', orderController.getAllStatusesForOrdersRequestedFromMe);
 router.post('/TodayTransfusions', orderController.getAcceptedOrdersRequestedFromMe);
-
+router.post('/approveOrderAndRewardDonor', orderController.approveOrderAndRewardDonor);
 router.get('/recent', orderController.getAllOrdersWithUsers);
 
 module.exports = router;

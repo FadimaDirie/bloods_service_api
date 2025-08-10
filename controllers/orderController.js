@@ -231,6 +231,7 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
 
     const classifyByStatus = (ordersList) => ({
       total: ordersList.length,
+      approved: ordersList.filter(o => o.status === 'approved'),
       accepted: ordersList.filter(o => o.status === 'accepted'),
       rejected: ordersList.filter(o => o.status === 'rejected'),
       waiting:  ordersList.filter(o => o.status === 'waiting'),
@@ -246,6 +247,7 @@ exports.getOrdersRequestedFromMe = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 
 // ✅ Return all orders that I (userId) requested from others
@@ -334,7 +336,6 @@ exports.approveOrderAndRewardDonor = async (req, res) => {
   }
 
   try {
-    // 1) Update order status -> "approved"
     const order = await Order.findByIdAndUpdate(
       orderId,
       { status: 'approved' },

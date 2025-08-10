@@ -3,10 +3,18 @@ const admin = require('../firebase');
 const User = require('../models/User');
 const { sendSMS } = require('../models/smsService'); // ✅ Correct
 
-// ✅ Create a new blood order
+// ✅ Create a new blood order (includes patient situation in FCM + SMS)
 exports.createOrder = async (req, res) => {
   try {
-    const { requesterId, donorId, bloodType, unit, hospitalName, patientName,description } = req.body;
+    const {
+      requesterId,
+      donorId,
+      bloodType,
+      unit,
+      hospitalName,
+      patientName,
+      description
+    } = req.body;
 
     if (!requesterId || !donorId || !bloodType) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -24,18 +32,48 @@ exports.createOrder = async (req, res) => {
     });
     await order.save();
 
-    // Notify donor if token exists
+    // Look up donor
     const donorUser = await User.findById(donorId);
-    const messageText = `New request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'} at ${hospitalName ?? 'a hospital'}.`;
 
+    // --- Build safe text values ---
+    const normalize = (v) => (v ?? '').toString().trim();
+    const _bloodType   = normalize(bloodType);
+    const _unit        = unit ?? 1;
+    const _patient     = normalize(patientName) || 'aan la magacaabin';
+    const _hospital    = normalize(hospitalName) || 'cusbitaal aan la cayimin';
+
+    // Patient situation (Somali). Shorten for SMS; keep readable.
+    const situationRaw = normalize(description);
+    const situationSnippet = situationRaw
+      ? situationRaw.replace(/\s+/g, ' ').slice(0, 180)
+      : 'lama bixin';
+
+    // ✅ SMS text (Somali) — includes patient situation
+    const messageText =
+      `Codsi dhiig ${_bloodType} (${_unit} unit) ` +
+      `bukaanka ${_patient} ee ${_hospital}. ` +
+      `Xaaladda bukaanka: ${situationSnippet}`;
+
+    // ✅ Push Notification (Somali) — includes patient situation
     if (donorUser?.fcmToken) {
       const message = {
         notification: {
           title: '🩸 Blood Request',
-          
-          // body: `You have a new request for ${bloodType} (${unit ?? 1} unit) for ${patientName ?? 'a patient'}.`,
-          body: `Fadlan ka jawaab codsigan sida ugu dhaqsaha badan. Waxaa laga codsaday dhiig ${bloodType} (${unit ?? 1} unit) bukaanka ${patientName ?? 'aan la magacaabin'} oo yaala ${hospitalName ?? 'cusbitaal aan la cayimin'}.`,
-
+          body:
+            `Fadlan ka jawaab codsigan sida ugu dhaqsaha badan. ` +
+            `Waxaa laga codsaday dhiig ${_bloodType} (${_unit} unit) ` +
+            `bukaanka ${_patient} oo yaalla ${_hospital}. ` +
+            `Xaaladda bukaanka: ${situationSnippet}`,
+        },
+        // Include useful data for deep-links / in-app routing
+        data: {
+          orderId: order._id.toString(),
+          type: 'blood_request',
+          bloodType: _bloodType,
+          unit: String(_unit),
+          patientName: _patient,
+          hospitalName: _hospital,
+          patientSituation: situationSnippet,
         },
         token: donorUser.fcmToken,
         android: {
@@ -60,11 +98,15 @@ exports.createOrder = async (req, res) => {
       console.log('ℹ️ Donor has no valid FCM token');
     }
 
-
-     // ✅ Also send SMS to donor
+    // ✅ Also send SMS to donor (includes patient situation)
     if (donorUser?.phone) {
-      await sendSMS(messageText, [donorUser.phone]);
+      try {
+        await sendSMS(messageText, [donorUser.phone]);
+      } catch (smsErr) {
+        console.warn('⚠️ SMS send failed:', smsErr.message);
+      }
     }
+
     res.status(201).json({ message: 'Order placed', order });
 
   } catch (error) {
@@ -72,6 +114,7 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // ✅ Get all orders where user is requester or donor
 exports.getMyOrders = async (req, res) => {

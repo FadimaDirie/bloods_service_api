@@ -391,7 +391,7 @@ exports.approveOrderAndRewardDonor = async (req, res) => {
 
     // 5) Optional SMS to donor (reward/thanks)
     if (donor?.phone) {
-      const smsText = `Mahadsanid deeq dhiig! Waxaad heshay +${rewardPoints} dhibco. Nooc: ${order.bloodType}, Qadarka: ${order.unit || 1}.`;
+      const smsText = `JazaakAllahu Khayran! Waxaad heshay Ajr weyn in shaa’ Allah. Nooc: ${order.bloodType}, Qadarka: ${order.unit || 1}. "وَمَنْ أَحْيَاهَا فَكَأَنَّمَا أَحْيَا النَّاسَ جَمِيعًا" ).`;
       try {
         await sendSMS(smsText, [donor.phone]);
       } catch (e) {

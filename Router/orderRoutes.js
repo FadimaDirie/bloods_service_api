@@ -12,6 +12,8 @@ router.put('/status', orderController.updateOrderStatus);
 router.post('/requested-by-me', orderController.getMyRequestedOrders);
 router.post('/requested-from-me', orderController.getOrdersRequestedFromMe);
 router.post('/requestedFromMe', orderController.getAllStatusesForOrdersRequestedFromMe);
+router.post('/TodayTransfusions', orderController.getAcceptedOrdersRequestedFromMe);
+
 router.get('/recent', orderController.getAllOrdersWithUsers);
 
 module.exports = router;

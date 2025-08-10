@@ -293,3 +293,34 @@ exports.getAllOrdersWithUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+
+
+// ✅ Return all "accepted" orders that I (userId) requested from others
+exports.getAcceptedOrdersRequestedFromMe = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'Missing userId in request body' });
+  }
+
+  try {
+    const acceptedOrders = await Order.find({
+      requesterId: userId,
+      status: 'confirmed'
+    })
+      .populate('requesterId', 'fullName email phone bloodType location')
+      .populate('donorId', 'fullName email phone bloodType location')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: 'confirmed orders retrieved successfully',
+      total: acceptedOrders.length,
+      orders: acceptedOrders
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

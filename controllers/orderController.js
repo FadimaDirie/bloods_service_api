@@ -6,7 +6,7 @@ const { sendSMS } = require('../models/smsService'); // ✅ Correct
 // ✅ Create a new blood order
 exports.createOrder = async (req, res) => {
   try {
-    const { requesterId, donorId, bloodType, unit, hospitalName, patientName } = req.body;
+    const { requesterId, donorId, bloodType, unit, hospitalName, patientName,description } = req.body;
 
     if (!requesterId || !donorId || !bloodType) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -19,7 +19,8 @@ exports.createOrder = async (req, res) => {
       bloodType,
       unit,
       hospitalName,
-      patientName
+      patientName,
+      description
     });
     await order.save();
 
@@ -200,6 +201,7 @@ exports.getMyRequestedOrders = async (req, res) => {
 
     const classifyByStatus = (ordersList) => ({
       total: ordersList.length,
+      approved: ordersList.filter(o => o.status === 'approved'),  // ✅ added
       accepted: ordersList.filter(o => o.status === 'accepted'),
       rejected: ordersList.filter(o => o.status === 'rejected'),
       waiting:  ordersList.filter(o => o.status === 'waiting'),

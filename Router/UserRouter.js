@@ -146,13 +146,13 @@ UserRouter.put('/:id/updateRole', async (req, res) => {
 
 // ✅ LOGIN ROUTE
 UserRouter.post('/login', async (req, res) => {
-  const { phone, password, fcmToken } = req.body;
+  const { phone, password } = req.body;
 
   try {
     const user = await User.findOne({ phone });
     if (!user) return res.status(400).json({ msg: 'Invalid phone number' });
 
-    // ✅ Check if account is suspended
+    // ✅ Suspended?
     if (user.isSuspended) {
       return res.status(403).json({
         msg: 'Your account has been suspended. Please contact support for assistance.'
@@ -162,15 +162,15 @@ UserRouter.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
-    // ✅ Update FCM token if provided
-    if (fcmToken) {
-      user.fcmToken = fcmToken;
-      await user.save();
-    }
+    // --- Single-login: rotate per-login token (invalidates all old JWTs) ---
+    const newLoginToken = crypto.randomUUID();
+    user.loginToken = newLoginToken;
+    await user.save();
 
-    await logToBlockchain(user._id); // log login
+    await logToBlockchain(user._id); // your existing audit log
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    // JWT carries the loginToken (lt) so middleware can reject old devices
+    const token = jwt.sign({ id: user._id, lt: newLoginToken }, JWT_SECRET, { expiresIn: '7d' });
 
     const userObj = user.toObject();
     userObj.profilePic = user.profilePic
@@ -178,18 +178,37 @@ UserRouter.post('/login', async (req, res) => {
       : null;
     userObj.fcmToken = user.fcmToken || null;
 
-    res.json({
-      msg: 'Login successful',
-      token,
-      user: userObj
-    });
-
+    return res.json({ msg: 'Login successful', token, user: userObj });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ msg: 'Server error' });
+    return res.status(500).json({ msg: 'Server error' });
   }
 });
 
+import crypto from 'crypto';
+// If Node < 18: npm i node-fetch and uncomment next line
+// import fetch from 'node-fetch';
+
+const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY; // set in env
+
+async function sendForceLogoutFCM(targetFcmToken) {
+  if (!targetFcmToken || !FCM_SERVER_KEY) return;
+  await fetch('https://fcm.googleapis.com/fcm/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `key=${FCM_SERVER_KEY}`,
+    },
+    body: JSON.stringify({
+      to: targetFcmToken,
+      data: { type: 'force_logout' },
+      notification: {
+        title: 'Logged in on another device',
+        body: 'You were signed out because your account logged in elsewhere.',
+      },
+    }),
+  }).catch(e => console.error('FCM send error:', e));
+}
 
 
 // ✅ Save FCM Token

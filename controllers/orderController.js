@@ -46,7 +46,7 @@ exports.createOrder = async (req, res) => {
     const situationRaw = normalize(description);
     const situationSnippet = situationRaw
       ? situationRaw.replace(/\s+/g, ' ').slice(0, 180)
-      : 'lama bixin';
+      : 'Emergency';
 
     // ✅ SMS text (Somali) — includes patient situation
     const messageText =

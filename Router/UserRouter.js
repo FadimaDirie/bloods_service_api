@@ -386,6 +386,92 @@ UserRouter.put('/:id/update', upload.single('profilePic'), async (req, res) => {
 });
 
 
+UserRouter.put('/update', async (req, res) => {
+  try {
+    const {
+      userId,
+      fullName,
+      phone,
+      bloodType,
+      age,
+      gender,
+      city,
+      hospitalName,
+      units,
+      latitude,
+      longitude,
+      fcmToken,
+      isDonor,
+    } = req.body || {};
+
+    if (!userId) {
+      return res.status(400).json({ success: false, msg: 'userId is required' });
+    }
+
+    // Coercers/helpers
+    const toBoolean = (v) => {
+      if (typeof v === 'boolean') return v;
+      if (v === 1 || v === '1') return true;
+      if (v === 0 || v === '0') return false;
+      const s = String(v).trim().toLowerCase();
+      return ['true', 'yes', 'y', 'on'].includes(s) ? true
+           : ['false', 'no', 'n', 'off'].includes(s) ? false
+           : undefined;
+    };
+
+    // Build $set only with provided fields
+    const $set = {};
+    if (fullName !== undefined) $set.fullName = String(fullName).trim();
+    if (phone !== undefined) $set.phone = String(phone).trim();
+    if (bloodType !== undefined) $set.bloodType = String(bloodType).trim();
+    if (age !== undefined) $set.age = Number(age);
+    if (gender !== undefined) $set.gender = String(gender).trim();
+    if (city !== undefined) $set.city = String(city).trim();
+    if (hospitalName !== undefined) $set.hospitalName = String(hospitalName).trim();
+    if (units !== undefined) $set.units = Number(units);
+    if (latitude !== undefined) $set.latitude = Number(latitude);
+    if (longitude !== undefined) $set.longitude = Number(longitude);
+    if (fcmToken !== undefined) $set.fcmToken = String(fcmToken).trim();
+
+    if (isDonor !== undefined) {
+      const coerced = toBoolean(isDonor);
+      if (coerced === undefined) {
+        return res.status(400).json({ success: false, msg: 'isDonor must be boolean-like (true/false/1/0)' });
+      }
+      $set.isDonor = coerced;
+    }
+
+    // Optional lightweight validations (adjust to your rules)
+    if ($set.bloodType && !/^(A|B|AB|O)[+-]$/.test($set.bloodType)) {
+      return res.status(400).json({ success: false, msg: 'Invalid blood type format' });
+    }
+    if ($set.age !== undefined && (Number.isNaN($set.age) || $set.age < 0 || $set.age > 120)) {
+      return res.status(400).json({ success: false, msg: 'Invalid age' });
+    }
+    if ($set.units !== undefined && (Number.isNaN($set.units) || $set.units < 0)) {
+      return res.status(400).json({ success: false, msg: 'Invalid units' });
+    }
+
+    // Always bump updatedAt if your schema uses timestamps
+    $set.updatedAt = new Date();
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { $set },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, msg: 'User not found' });
+    }
+
+    return res.json({ success: true, msg: 'User updated successfully', user: updated });
+  } catch (err) {
+    console.error('Update user error:', err);
+    return res.status(500).json({ success: false, msg: 'Server error', error: err.message });
+  }
+});
+
 
 
 module.exports = UserRouter;

@@ -372,7 +372,7 @@ exports.getAcceptedOrdersRequestedFromMe = async (req, res) => {
   }
 };
 
-export const getTodayTransfusionsAllConfirmed = async (req, res) => {
+exports.getTodayTransfusionsAllConfirmed = async (req, res) => {
   try {
     const start = dayjs().startOf("day").toDate();
     const end   = dayjs().endOf("day").toDate();

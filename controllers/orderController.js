@@ -372,6 +372,29 @@ exports.getAcceptedOrdersRequestedFromMe = async (req, res) => {
   }
 };
 
+export const getTodayTransfusionsAllConfirmed = async (req, res) => {
+  try {
+    const start = dayjs().startOf("day").toDate();
+    const end   = dayjs().endOf("day").toDate();
+
+    const orders = await Order.find({
+      status: "confirmed",
+      createdAt: { $gte: start, $lte: end },
+    })
+      .populate("requesterId", "fullName email phone bloodType location")
+      .populate("donorId", "fullName email phone bloodType location")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "confirmed orders retrieved successfully",
+      total: orders.length,
+      orders,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 
 exports.approveOrderAndRewardDonor = async (req, res) => {
   const { orderId, userId, rewardPoints = 50 } = req.body;
@@ -437,7 +460,7 @@ exports.approveOrderAndRewardDonor = async (req, res) => {
 
     // 5) Optional SMS to donor (reward/thanks)
     if (donor?.phone) {
-      const smsText = `JazaakAllahu Khayran! Waxaad heshay Ajr weyn in shaa’ Allah. Nooc: ${order.bloodType}, Qadarka: ${order.unit || 1}. "Qofkii badbaadiya hal naf, waxay la mid tahay sidii uu badbaadiyay dhammaan dadka" (Suuradda: Al-Maa’idah 5:32).`;
+      const smsText = `JazaakAllahu Khayran! Waxaad heshay Ajr weyn inshaAllah Qofkii badbaadiya hal naf, waxay la mid tahay sidii uu badbaadiyay dhammaan dadka" (Suuradda: Al-Maa’idah 5:32)". Nooc: ${order.bloodType}, Qadarka: ${order.unit || 1}.`;
       try {
         await sendSMS(smsText, [donor.phone]);
       } catch (e) {

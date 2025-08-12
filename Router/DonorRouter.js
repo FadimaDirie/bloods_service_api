@@ -217,51 +217,69 @@ DonorRouter.get('/city-debug', async (req, res) => {
 
 
 
-
-// Summary route
+// GET /api/donor/summary-by-status
 DonorRouter.get('/summary-by-status', async (req, res) => {
   try {
+    const { today, from, to } = req.query;
+
+    // ---- filter: today=1 ama from/to (ISO string) ----
+    const match = {
+      status: { $in: ['accepted', 'rejected', 'waiting', 'confirmed', 'approved'] }
+    };
+
+    if (today === '1') {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const end   = new Date(); end.setHours(23, 59, 59, 999);
+      match.createdAt = { $gte: start, $lte: end };
+    } else if (from || to) {
+      const start = from ? new Date(from) : new Date(0);
+      const end   = to   ? new Date(to)   : new Date();
+      match.createdAt = { $gte: start, $lte: end };
+    }
+
     const pipeline = [
-      {
-        $match: {
-          status: { $in: ['accepted', 'rejected', 'waiting', 'confirmed'] }
-        }
-      },
+      { $match: match },
       {
         $group: {
           _id: '$status',
-          totalUnits: { $sum: '$unit' },
+          totalUnits: { $sum: { $ifNull: ['$unit', 0] } },
           count: { $sum: 1 }
         }
-      }
+      },
+      { $sort: { _id: 1 } }
     ];
 
     const results = await Order.aggregate(pipeline);
 
+    // dhis object dhammaan statuses (xataa kuwa aan imaan)
     const summary = {
-      accepted: { units: 0, count: 0 },
-      rejected: { units: 0, count: 0 },
-      waiting: { units: 0, count: 0 },
-      confirmed: { units: 0, count: 0 }
+      accepted:  { units: 0, count: 0 },
+      rejected:  { units: 0, count: 0 },
+      waiting:   { units: 0, count: 0 },
+      confirmed: { units: 0, count: 0 },
+      approved:  { units: 0, count: 0 },   // ✅ KU DARAY
     };
 
+    let totals = { units: 0, count: 0 };
     results.forEach(r => {
-      summary[r._id] = {
-        units: r.totalUnits,
-        count: r.count
-      };
+      summary[r._id] = { units: r.totalUnits, count: r.count };
+      totals.units += r.totalUnits;
+      totals.count += r.count;
     });
 
     return res.json({
       success: true,
       message: 'Blood unit summary by status',
-      data: summary
+      filter: today === '1' ? 'today' : (from || to ? { from, to } : 'all-time'),
+      data: summary,
+      totals // ✅ guud ahaan tirada iyo units-ka
     });
   } catch (err) {
     console.error('Error:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 });
+
 
 
 // GET /api/donors/stats-by-city

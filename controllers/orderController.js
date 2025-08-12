@@ -374,27 +374,26 @@ exports.getAcceptedOrdersRequestedFromMe = async (req, res) => {
 
 exports.getTodayTransfusionsAllConfirmed = async (req, res) => {
   try {
-    const start = dayjs().startOf("day").toDate();
-    const end   = dayjs().endOf("day").toDate();
+    const start = dayjs().startOf('day').toDate();
+    const end   = dayjs().endOf('day').toDate();
 
     const orders = await Order.find({
-      status: "confirmed",
+      status: 'confirmed',
       createdAt: { $gte: start, $lte: end },
     })
-      .populate("requesterId", "fullName email phone bloodType location")
-      .populate("donorId", "fullName email phone bloodType location")
+      .populate('requesterId', 'fullName email phone bloodType location')
+      .populate('donorId', 'fullName email phone bloodType location')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
-      message: "confirmed orders retrieved successfully",
+      message: 'confirmed orders retrieved successfully',
       total: orders.length,
       orders,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-
 
 exports.approveOrderAndRewardDonor = async (req, res) => {
   const { orderId, userId, rewardPoints = 50 } = req.body;

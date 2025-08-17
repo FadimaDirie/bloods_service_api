@@ -8,5 +8,16 @@ router.get('/login-logs', async (req, res) => {
   res.json({ success: true, logs });
 });
 
+// ✅ GET total blockchain transactions
+router.get('/total-transactions', async (req, res) => {
+  try {
+    const total = await LoginLog.countDocuments(); // tirada blocks/logs
+    res.json({ success: true, totalTransactions: total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 
 module.exports = router;
